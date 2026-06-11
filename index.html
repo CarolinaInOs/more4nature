@@ -187,11 +187,11 @@ async function loadState(){
   try {
     const res = await fetch("https://more4nature-bf513-default-rtdb.firebaseio.com/state.json");
     const data = await res.json();
-    if(data.checks) state.checks = data.checks;
-    if(data.links) state.links = data.links;
-    if(data.responsables) state.responsables = data.responsables;
-    if(data.notes) state.notes = data.notes;
-    if(data.cases) state.cases = data.cases;
+    if(data && data.checks) state.checks = data.checks;
+    if(data && data.links) state.links = data.links;
+    if(data && data.responsables) state.responsables = data.responsables;
+    if(data && data.notes) state.notes = data.notes;
+    if(data && data.cases && Array.isArray(data.cases) && data.cases.length > 0) state.cases = data.cases;
   } catch(e) {
     console.warn("Could not load shared state, using defaults", e);
   }
