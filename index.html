@@ -183,15 +183,19 @@ let addingShFor = null;
 let saveTimer = null;
 
 // ---- SHARED STATE via Firebase ----
+const FB = "https://more4nature-bf513-default-rtdb.firebaseio.com";
+
 async function loadState(){
   try {
-    const res = await fetch("https://more4nature-bf513-default-rtdb.firebaseio.com/state.json");
+    const res = await fetch(FB + "/state.json");
     const data = await res.json();
-    if(data && data.checks) state.checks = data.checks;
-    if(data && data.links) state.links = data.links;
-    if(data && data.responsables) state.responsables = data.responsables;
-    if(data && data.notes) state.notes = data.notes;
-    if(data && data.cases && Array.isArray(data.cases) && data.cases.length > 0) state.cases = data.cases;
+    if(data && typeof data === "object"){
+      if(data.checks && typeof data.checks === "object") state.checks = data.checks;
+      if(data.links && typeof data.links === "object") state.links = data.links;
+      if(data.responsables && typeof data.responsables === "object") state.responsables = data.responsables;
+      if(data.notes && typeof data.notes === "object") state.notes = data.notes;
+      if(data.cases && Array.isArray(data.cases) && data.cases.length >= 3 && data.cases[0].stakeholders) state.cases = data.cases;
+    }
   } catch(e) {
     console.warn("Could not load shared state, using defaults", e);
   }
@@ -205,7 +209,7 @@ async function persistNow(){
       const el = document.getElementById("note-"+k);
       if(el) state.notes[k] = el.value;
     });
-    await fetch("https://more4nature-bf513-default-rtdb.firebaseio.com/state.json", {
+    await fetch(FB + "/state.json", {
       method: "PUT",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(state)
