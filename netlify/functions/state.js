@@ -1,4 +1,6 @@
-exports.handler = async (event, context) => {
+const { getStore } = require("@netlify/blobs");
+
+exports.handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
@@ -10,8 +12,11 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { getStore } = require("@netlify/blobs");
-    const store = getStore("m4n-state");
+    const store = getStore({
+      name: "m4n-state",
+      siteID: "25518391-1288-48ac-8ab2-b589ff0cfc9a",
+      token: process.env.NETLIFY_BLOBS_TOKEN
+    });
 
     if (event.httpMethod === "GET") {
       const data = await store.get("state", { type: "text" });
@@ -23,10 +28,8 @@ exports.handler = async (event, context) => {
       return { statusCode: 200, headers, body: '{"ok":true}' };
     }
   } catch(e) {
-    return { 
-      statusCode: 500, 
-      headers, 
-      body: JSON.stringify({error: e.message, stack: e.stack}) 
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: e.message }) };
   }
+
+  return { statusCode: 405, headers, body: "{}" };
 };
