@@ -9,16 +9,16 @@
 body{font-family:Arial,sans-serif;font-size:14px;color:#222;background:#fafafa;padding:24px}
 h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .subtitle{font-size:13px;color:#666;text-align:center;margin-bottom:20px}
-.diagram-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px;text-align:center}
-.diagram-section iframe{width:100%;height:500px;border:none;border-radius:4px}
-.legend{display:flex;align-items:center;gap:6px;font-size:11px;color:#378ADD;margin-top:8px}
-.legend-box{width:12px;height:12px;border:1.5px solid #378ADD;border-radius:2px;flex-shrink:0}
+.diagram-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px}
+.diagram-section iframe{width:100%;height:600px;border:none;border-radius:4px;display:block}
 .notes-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px}
 .notes-section h2{font-size:15px;font-weight:600;margin-bottom:10px;color:#333}
 .notes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
 .note-box{background:#fafafa;border:1px solid #ddd;border-radius:6px;overflow:hidden}
 .note-box-head{background:#f0f0f0;padding:7px 10px;font-size:12px;font-weight:600;color:#444}
-.note-box textarea{width:100%;border:none;background:transparent;padding:8px 10px;font-size:12px;color:#333;resize:vertical;min-height:80px;outline:none;font-family:Arial,sans-serif}
+.note-box-fixed{font-size:12px;color:#444;padding:8px 10px;border-bottom:1px solid #eee;line-height:1.6}
+.note-box-fixed a{color:#378ADD;text-decoration:none}
+.note-box textarea{width:100%;border:none;background:transparent;padding:8px 10px;font-size:12px;color:#333;resize:vertical;min-height:70px;outline:none;font-family:Arial,sans-serif}
 .cases-section h2{font-size:15px;font-weight:600;margin-bottom:12px;color:#333}
 .cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
 .col-card{background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden}
@@ -26,7 +26,7 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .col-head h3{font-size:14px;font-weight:600;color:#222}
 .col-meta{margin-top:8px}
 .meta-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
-.meta-label{font-size:11px;color:#888;min-width:140px}
+.meta-label{font-size:11px;color:#888;min-width:80px}
 .meta-val{font-size:12px;color:#222;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;font-family:Arial,sans-serif;padding:1px 2px}
 .meta-val:focus{border-bottom-color:#378ADD}
 .link-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
@@ -48,10 +48,16 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .sh-name{font-size:12px;font-weight:600;color:#333;flex:1}
 .sh-badge{font-size:10px;color:#378ADD;background:#e8f2fc;padding:2px 6px;border-radius:4px}
 .sh-tog{font-size:12px;color:#999;transition:transform .2s}
+.sh-delete{font-size:11px;color:#cc4444;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:3px;margin-left:4px}
+.sh-delete:hover{background:#ffeaea}
 .sh-body{padding:6px 10px 10px}
 .sh-body.collapsed{display:none}
 .int-type{font-size:11px;font-weight:600;color:#555;margin:8px 0 4px;padding:3px 6px;background:#f0f0f0;border-radius:3px}
+.int-objetivo{font-size:12px;color:#222;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;font-family:Arial,sans-serif;padding:2px 4px}
+.int-objetivo:focus{border-bottom-color:#378ADD}
 .add-sh-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#378ADD;cursor:pointer;margin-top:10px;padding:6px 0;background:none;border:none;width:100%}
+.add-int-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#888;cursor:pointer;margin-top:6px;padding:4px 0;background:none;border:none;width:100%}
+.add-int-btn:hover{color:#378ADD}
 .add-sh-form{margin-top:8px;border:1px solid #ddd;border-radius:6px;padding:10px;background:#fafafa}
 .form-row{margin-bottom:8px}
 .form-row label{font-size:11px;color:#666;display:block;margin-bottom:3px}
@@ -61,18 +67,20 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .form-btns{display:flex;gap:8px}
 .form-btns button{font-size:12px;padding:5px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer}
 .form-btns button:first-child{background:#378ADD;color:#fff;border-color:#378ADD}
-.saving{font-size:11px;color:#aaa;text-align:center;padding:.4rem 0}
+.saving{font-size:11px;color:#aaa;text-align:center;padding:.4rem 0;min-height:20px}
+.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;z-index:999}
 @media(max-width:700px){.cols{grid-template-columns:1fr}.notes-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
+<div class="loading-overlay" id="loading">Cargando datos...</div>
+
 <h1>More4nature</h1>
-<p class="subtitle">Seguimiento de coordinación del proyecto</p>
+<p class="subtitle">Coordinación interna del proyecto</p>
 
 <div class="diagram-section">
   <iframe src="https://drive.google.com/file/d/1vhwlbh_sn8pdwDffdSQ4vpxR_uDUaAeF/preview" allowfullscreen></iframe>
-  <div class="legend"><div class="legend-box"></div> Encargado: Bosques del Mundo</div>
 </div>
 
 <div class="notes-section">
@@ -80,19 +88,23 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
   <div class="notes-grid">
     <div class="note-box">
       <div class="note-box-head">Coordinación general</div>
-      <textarea id="note-general" placeholder="Notas generales del proyecto..." oninput="saveNotes()"></textarea>
+      <div class="note-box-fixed">
+        Jens Noe — <a href="mailto:jnh@verdensskove.org">jnh@verdensskove.org</a><br>
+        Carolina Infante — <a href="mailto:cio@verdensskove.org">cio@verdensskove.org</a>
+      </div>
+      <textarea id="note-general" placeholder="Notas generales del proyecto..." oninput="queueSave()"></textarea>
     </div>
     <div class="note-box">
-      <div class="note-box-head">Honduras — Guaruma</div>
-      <textarea id="note-honduras" placeholder="Notas para Honduras..." oninput="saveNotes()"></textarea>
+      <div class="note-box-head">Honduras</div>
+      <textarea id="note-honduras" placeholder="Notas para Honduras..." oninput="queueSave()"></textarea>
     </div>
     <div class="note-box">
-      <div class="note-box-head">Bolivia — Monte Verde</div>
-      <textarea id="note-bolivia" placeholder="Notas para Bolivia..." oninput="saveNotes()"></textarea>
+      <div class="note-box-head">Bolivia</div>
+      <textarea id="note-bolivia" placeholder="Notas para Bolivia..." oninput="queueSave()"></textarea>
     </div>
     <div class="note-box">
-      <div class="note-box-head">Colombia — Human Forest</div>
-      <textarea id="note-colombia" placeholder="Notas para Colombia..." oninput="saveNotes()"></textarea>
+      <div class="note-box-head">Colombia</div>
+      <textarea id="note-colombia" placeholder="Notas para Colombia..." oninput="queueSave()"></textarea>
     </div>
   </div>
 </div>
@@ -107,9 +119,9 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 <script>
 const CASES_DEF = [
   {id:"honduras", title:"Honduras", partner:"Guaruma", stakeholders:[
-    {id:"sh_fupnapib", name:"FUPNAPIB", combined:false},
-    {id:"sh_juntas", name:"Juntas de Agua", combined:false},
-    {id:"sh_icf", name:"ICF", combined:false}
+    {id:"sh_fupnapib", name:"FUPNAPIB", combined:false, extraInts:[]},
+    {id:"sh_juntas", name:"Juntas de Agua", combined:false, extraInts:[]},
+    {id:"sh_icf", name:"ICF", combined:false, extraInts:[]}
   ]},
   {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[]},
   {id:"colombia", title:"Colombia", partner:"Human Forest", stakeholders:[]}
@@ -146,6 +158,18 @@ const INTERACTION_TYPES = [
   ]}
 ];
 
+const EXTRA_INT_ITEMS = [
+  {k:"consent_drive", t:"Consentimientos — En DRIVE - originales"},
+  {k:"consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
+  {k:"diseno_drive", t:"Diseño de taller — En DRIVE - original"},
+  {k:"diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
+  {k:"kobo", t:"Verificar KOBO participantes"},
+  {k:"fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
+  {k:"fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
+  {k:"kobo_ref", t:"Realizar KOBO de reflexión"},
+  {k:"base", t:"Actualizar interacción en base de datos"}
+];
+
 const PRE_ETAPAS = [
   {k:"eval", t:"Evaluación inicial de Etapa 1 listo para verificación con el consorcio"},
   {k:"reclu_plan", t:"Planificación de reclutamiento: Actores identificados y borradores de mensajes de invitación"},
@@ -157,41 +181,49 @@ let state = {cases: JSON.parse(JSON.stringify(CASES_DEF)), checks:{}, links:{}, 
 let addingShFor = null;
 let saveTimer = null;
 
-function loadState(){
-  try{
-    const s = localStorage.getItem("m4n_coord_v1");
-    if(s){
-      const saved = JSON.parse(s);
-      if(saved.checks) state.checks = saved.checks;
-      if(saved.links) state.links = saved.links;
-      if(saved.responsables) state.responsables = saved.responsables;
-      if(saved.notes) state.notes = saved.notes;
-      if(saved.cases) state.cases = saved.cases;
-    }
-  }catch(e){}
+// ---- SHARED STATE via Netlify Function ----
+async function loadState(){
+  try {
+    const res = await fetch("/.netlify/functions/state");
+    const data = await res.json();
+    if(data.checks) state.checks = data.checks;
+    if(data.links) state.links = data.links;
+    if(data.responsables) state.responsables = data.responsables;
+    if(data.notes) state.notes = data.notes;
+    if(data.cases) state.cases = data.cases;
+  } catch(e) {
+    console.warn("Could not load shared state, using defaults", e);
+  }
+  document.getElementById("loading").style.display = "none";
 }
 
-function persist(){
+async function persistNow(){
+  try {
+    // Collect current note values into state before saving
+    ["general","honduras","bolivia","colombia"].forEach(k=>{
+      const el = document.getElementById("note-"+k);
+      if(el) state.notes[k] = el.value;
+    });
+    await fetch("/.netlify/functions/state", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(state)
+    });
+    showSaving("Guardado ✓");
+  } catch(e) {
+    showSaving("Error al guardar");
+  }
+}
+
+function queueSave(){
+  showSaving("Guardando...");
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(()=>{
-    try{
-      localStorage.setItem("m4n_coord_v1", JSON.stringify(state));
-      showSaving("Guardado ✓");
-    }catch(e){ showSaving("Error al guardar"); }
-  }, 600);
+  saveTimer = setTimeout(persistNow, 800);
 }
 
 function showSaving(msg){
   const el = document.getElementById("saving-status");
-  if(el){ el.textContent = msg; setTimeout(()=> el.textContent="", 2000); }
-}
-
-function saveNotes(){
-  ["general","honduras","bolivia","colombia"].forEach(k=>{
-    const el = document.getElementById("note-"+k);
-    if(el) state.notes[k] = el.value;
-  });
-  persist();
+  if(el){ el.textContent = msg; if(msg==="Guardado ✓") setTimeout(()=>el.textContent="",2000); }
 }
 
 function loadNotes(){
@@ -201,6 +233,7 @@ function loadNotes(){
   });
 }
 
+// ---- CHECKBOXES ----
 function toggleCheck(id){
   state.checks[id] = !state.checks[id];
   const row = document.getElementById("row-"+id);
@@ -208,7 +241,7 @@ function toggleCheck(id){
   if(row) row.classList.toggle("done", !!state.checks[id]);
   if(cb) cb.checked = !!state.checks[id];
   updateAllProgress();
-  persist();
+  queueSave();
 }
 
 function updateAllProgress(){
@@ -220,6 +253,9 @@ function updateAllProgress(){
     c.stakeholders.forEach(sh=>{
       INTERACTION_TYPES.forEach(itype=>{
         itype.items.forEach(i=>{ total++; if(state.checks[sh.id+"_"+itype.id+"_"+i.k]) done++; });
+      });
+      (sh.extraInts||[]).forEach(ei=>{
+        EXTRA_INT_ITEMS.forEach(i=>{ total++; if(state.checks[sh.id+"_extra_"+ei.id+"_"+i.k]) done++; });
       });
     });
     bar.style.width = (total ? Math.round(done/total*100) : 0)+"%";
@@ -234,17 +270,61 @@ function renderCheckRow(id, text){
   </div>`;
 }
 
+// ---- EXTRA INTERACTIONS ----
+function saveExtraIntName(shId, eiId, val){
+  state.cases.forEach(c=>{
+    c.stakeholders.forEach(sh=>{
+      if(sh.id===shId){
+        const ei = (sh.extraInts||[]).find(x=>x.id===eiId);
+        if(ei) ei.name = val;
+      }
+    });
+  });
+  queueSave();
+}
+
+function addExtraInt(caseId, shId){
+  const c = state.cases.find(x=>x.id===caseId);
+  const sh = c.stakeholders.find(x=>x.id===shId);
+  if(!sh.extraInts) sh.extraInts = [];
+  const num = 4 + sh.extraInts.length;
+  sh.extraInts.push({id:"ei_"+Date.now(), name:"", num});
+  renderAll();
+  queueSave();
+}
+
+function deleteExtraInt(caseId, shId, eiId){
+  const c = state.cases.find(x=>x.id===caseId);
+  const sh = c.stakeholders.find(x=>x.id===shId);
+  sh.extraInts = (sh.extraInts||[]).filter(x=>x.id!==eiId);
+  renderAll();
+  queueSave();
+}
+
+// ---- STAKEHOLDERS ----
 function renderStakeholder(caseId, sh){
   let intHtml = "";
   INTERACTION_TYPES.forEach(itype=>{
     intHtml += `<div class="int-type">${itype.name}</div>`;
     itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
   });
+  (sh.extraInts||[]).forEach((ei, idx)=>{
+    const num = 4 + idx;
+    intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:6px">
+      <span>${num}.</span>
+      <input class="int-objetivo" type="text" value="${(ei.name||"").replace(/"/g,"&quot;")}" placeholder="Escribir objetivo de la interacción" oninput="saveExtraIntName('${sh.id}','${ei.id}',this.value)">
+      <button class="sh-delete" onclick="deleteExtraInt('${caseId}','${sh.id}','${ei.id}')" title="Eliminar interacción">✕</button>
+    </div>`;
+    EXTRA_INT_ITEMS.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_extra_"+ei.id+"_"+i.k, i.t); });
+  });
+  intHtml += `<button class="add-int-btn" onclick="addExtraInt('${caseId}','${sh.id}')">+ Agregar interacción</button>`;
+
   const badge = sh.combined ? `<span class="sh-badge">combinada</span>` : "";
   return `<div class="sh-block" id="shblock-${sh.id}">
     <div class="sh-head" onclick="toggleSh('${sh.id}')">
       <span class="sh-name">${sh.name}</span>${badge}
       <span class="sh-tog" id="sht-${sh.id}">▾</span>
+      <button class="sh-delete" onclick="deleteSh(event,'${caseId}','${sh.id}')" title="Eliminar actor">✕</button>
     </div>
     <div class="sh-body collapsed" id="shbody-${sh.id}">${intHtml}</div>
   </div>`;
@@ -257,18 +337,27 @@ function toggleSh(id){
   tog.style.transform = c ? "" : "rotate(180deg)";
 }
 
+function deleteSh(event, caseId, shId){
+  event.stopPropagation();
+  if(!confirm("¿Eliminar este actor y todos sus datos?")) return;
+  const c = state.cases.find(x=>x.id===caseId);
+  c.stakeholders = c.stakeholders.filter(x=>x.id!==shId);
+  renderAll();
+  queueSave();
+}
+
+// ---- META & LINKS ----
 function saveMeta(caseId, field, val){
   if(!state.responsables[caseId]) state.responsables[caseId] = {};
   state.responsables[caseId][field] = val;
-  persist();
+  queueSave();
 }
 
 function saveLink(caseId, linkKey, val){
   state.links[caseId+"_"+linkKey] = val;
-  // update open button
   const btn = document.getElementById("open-"+caseId+"-"+linkKey);
   if(btn){ if(val){ btn.href=val; btn.style.display="inline"; } else { btn.style.display="none"; } }
-  persist();
+  queueSave();
 }
 
 function renderLinkRow(caseId, linkKey, label){
@@ -276,10 +365,11 @@ function renderLinkRow(caseId, linkKey, label){
   return `<div class="link-row">
     <span class="link-label">${label}:</span>
     <input class="link-input" type="text" value="${val.replace(/"/g,"&quot;")}" placeholder="https://..." oninput="saveLink('${caseId}','${linkKey}',this.value)">
-    <a id="open-${caseId}-${linkKey}" class="link-open" href="${val}" target="_blank" style="display:${val?'inline':'none'}">↗ abrir</a>
+    <a id="open-${caseId}-${linkKey}" class="link-open" href="${val}" target="_blank" style="display:${val?'inline':'none'}">↗</a>
   </div>`;
 }
 
+// ---- ADD STAKEHOLDER FORM ----
 function renderAddShForm(caseId){
   if(addingShFor !== caseId)
     return `<button class="add-sh-btn" onclick="startAddSh('${caseId}')">+ Agregar actor</button>`;
@@ -288,23 +378,19 @@ function renderAddShForm(caseId){
   return `<div class="add-sh-form">
     <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:8px">Nuevo actor</div>
     <div class="form-row">
-      <label>Nombre del actor</label>
-      <input type="text" id="sh-name-${caseId}" placeholder="Ej: FUPNAPIB"/>
-    </div>
-    <div class="form-row">
-      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-        <input type="checkbox" id="sh-comb-${caseId}" onchange="toggleCombUI('${caseId}')"> ¿Interacción combinada?
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:8px">
+        <input type="checkbox" id="sh-comb-${caseId}"> ¿Interacción combinada?
       </label>
     </div>
-    <div id="comb-ui-${caseId}" style="display:none">
-      <div style="font-size:11px;color:#888;margin-bottom:6px">Seleccionar actores participantes:</div>
+    <div class="form-row">
+      <label>Seleccionar actor(es) existentes</label>
       <div class="combined-checks">
-        ${names.length ? names.map(n=>`<label><input type="checkbox" class="cpart-${caseId}" value="${n}"> ${n}</label>`).join("") : '<span style="font-size:11px;color:#bbb">Añade actores primero</span>'}
+        ${names.length ? names.map(n=>`<label><input type="checkbox" class="cpart-${caseId}" value="${n}"> ${n}</label>`).join("") : '<span style="font-size:11px;color:#bbb">Aún no hay actores registrados</span>'}
       </div>
-      <div class="form-row" style="margin-top:6px">
-        <label>O añadir nombre libre</label>
-        <input type="text" id="sh-extra-${caseId}" placeholder="Otro nombre (opcional)"/>
-      </div>
+    </div>
+    <div class="form-row">
+      <label>O escribir nombre nuevo</label>
+      <input type="text" id="sh-extra-${caseId}" placeholder="Nombre del actor"/>
     </div>
     <div class="form-btns">
       <button onclick="confirmAddSh('${caseId}')">Agregar</button>
@@ -313,31 +399,26 @@ function renderAddShForm(caseId){
   </div>`;
 }
 
-function toggleCombUI(caseId){
-  const cb = document.getElementById("sh-comb-"+caseId);
-  const ui = document.getElementById("comb-ui-"+caseId);
-  if(ui) ui.style.display = cb.checked ? "block" : "none";
-}
 function startAddSh(caseId){ addingShFor=caseId; renderAll(); }
 function cancelAddSh(){ addingShFor=null; renderAll(); }
+
 function confirmAddSh(caseId){
-  const nameEl = document.getElementById("sh-name-"+caseId);
-  if(!nameEl || !nameEl.value.trim()) return;
   const combined = document.getElementById("sh-comb-"+caseId)?.checked || false;
   let parts = [];
-  if(combined){
-    document.querySelectorAll(".cpart-"+caseId+":checked").forEach(el=>parts.push(el.value));
-    const extra = document.getElementById("sh-extra-"+caseId);
-    if(extra && extra.value.trim()) parts.push(extra.value.trim());
-  }
+  document.querySelectorAll(".cpart-"+caseId+":checked").forEach(el=>parts.push(el.value));
+  const extra = document.getElementById("sh-extra-"+caseId);
+  const extraVal = extra ? extra.value.trim() : "";
+  if(extraVal) parts.push(extraVal);
+  if(!parts.length) return;
   const c = state.cases.find(x=>x.id===caseId);
-  const finalName = combined && parts.length ? parts.join(" + ") : nameEl.value.trim();
-  c.stakeholders.push({id:"sh_"+Date.now(), name:finalName, combined, parts});
+  const finalName = parts.join(" + ");
+  c.stakeholders.push({id:"sh_"+Date.now(), name:finalName, combined, parts, extraInts:[]});
   addingShFor = null;
   renderAll();
-  persist();
+  queueSave();
 }
 
+// ---- RENDER ----
 function renderCase(c){
   const meta = state.responsables[c.id] || {};
   const preRows = PRE_ETAPAS.map(i=>renderCheckRow(c.id+"_pre_"+i.k, i.t)).join("");
@@ -352,7 +433,11 @@ function renderCase(c){
         </div>
         <div class="meta-row">
           <span class="meta-label">Responsable:</span>
-          <input class="meta-val" type="text" value="${(meta.responsable||"").replace(/"/g,"&quot;")}" placeholder="Nombre del responsable" oninput="saveMeta('${c.id}','responsable',this.value)">
+          <input class="meta-val" type="text" value="${(meta.responsable||"").replace(/"/g,"&quot;")}" placeholder="Nombre" oninput="saveMeta('${c.id}','responsable',this.value)">
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Email:</span>
+          <input class="meta-val" type="email" value="${(meta.email||"").replace(/"/g,"&quot;")}" placeholder="correo@ejemplo.org" oninput="saveMeta('${c.id}','email',this.value)">
         </div>
         <div style="margin-top:8px">
           ${renderLinkRow(c.id,"drive","Drive")}
@@ -376,9 +461,13 @@ function renderAll(){
   updateAllProgress();
 }
 
-loadState();
-renderAll();
-loadNotes();
+async function init(){
+  await loadState();
+  renderAll();
+  loadNotes();
+}
+
+init();
 </script>
 </body>
 </html>
