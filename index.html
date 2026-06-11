@@ -194,7 +194,27 @@ async function loadState(){
       if(data.links && typeof data.links === "object") state.links = data.links;
       if(data.responsables && typeof data.responsables === "object") state.responsables = data.responsables;
       if(data.notes && typeof data.notes === "object") state.notes = data.notes;
-      if(data.cases && Array.isArray(data.cases) && data.cases.length >= 3 && data.cases[0].stakeholders) state.cases = data.cases;
+      // Firebase converts arrays to objects — convert back
+      if(data.cases && typeof data.cases === "object"){
+        const casesArr = Object.values(data.cases);
+        if(casesArr.length >= 3){
+          casesArr.forEach(c => {
+            if(c.stakeholders && !Array.isArray(c.stakeholders)){
+              c.stakeholders = Object.values(c.stakeholders).map(sh => {
+                if(sh.extraInts && !Array.isArray(sh.extraInts)){
+                  sh.extraInts = Object.values(sh.extraInts);
+                } else if(!sh.extraInts) {
+                  sh.extraInts = [];
+                }
+                return sh;
+              });
+            } else if(!c.stakeholders){
+              c.stakeholders = [];
+            }
+          });
+          state.cases = casesArr;
+        }
+      }
     }
   } catch(e) {
     console.warn("Could not load shared state, using defaults", e);
