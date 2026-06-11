@@ -1,5 +1,3 @@
-const { getStore } = require("@netlify/blobs");
-
 exports.handler = async (event, context) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -11,24 +9,21 @@ exports.handler = async (event, context) => {
     return { statusCode: 200, headers, body: "" };
   }
 
-  const store = getStore({ name: "m4n-state", consistency: "strong" });
+  try {
+    const { getStore } = require("@netlify/blobs");
+    const store = getStore("m4n-state");
 
-  if (event.httpMethod === "GET") {
-    try {
+    if (event.httpMethod === "GET") {
       const data = await store.get("state", { type: "text" });
       return { statusCode: 200, headers, body: data || "{}" };
-    } catch(e) {
-      return { statusCode: 200, headers, body: "{}" };
     }
-  }
 
-  if (event.httpMethod === "POST") {
-    try {
+    if (event.httpMethod === "POST") {
       await store.set("state", event.body);
       return { statusCode: 200, headers, body: '{"ok":true}' };
-    } catch(e) {
-      return { statusCode: 500, headers, body: JSON.stringify({error: e.message}) };
     }
+  } catch(e) {
+    return { statusCode: 500, headers, body: JSON.stringify({error: e.message}) };
   }
 
   return { statusCode: 405, headers, body: '{"error":"Method not allowed"}' };
