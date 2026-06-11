@@ -89,6 +89,7 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
     <div class="note-box">
       <div class="note-box-head">Coordinación general</div>
       <div class="note-box-fixed">
+        <a href="https://drive.google.com/drive/folders/1j2vygpQ22gpV9keNlpVRFnot6X8dsWpW?usp=share_link" target="_blank">📁 Link to folder</a><br><br>
         Jens Noe — <a href="mailto:jnh@verdensskove.org">jnh@verdensskove.org</a><br>
         Carolina Infante — <a href="mailto:cio@verdensskove.org">cio@verdensskove.org</a>
       </div>
@@ -399,6 +400,18 @@ function renderAddShForm(caseId){
   </div>`;
 }
 
+function editEmail(event, caseId){
+  event.preventDefault();
+  if(!state.responsables[caseId]) state.responsables[caseId] = {};
+  const current = state.responsables[caseId].email || "";
+  const val = prompt("Editar email:", current);
+  if(val !== null){
+    state.responsables[caseId].email = val.trim();
+    queueSave();
+    renderAll();
+  }
+}
+
 function startAddSh(caseId){ addingShFor=caseId; renderAll(); }
 function cancelAddSh(){ addingShFor=null; renderAll(); }
 
@@ -437,7 +450,10 @@ function renderCase(c){
         </div>
         <div class="meta-row">
           <span class="meta-label">Email:</span>
-          <input class="meta-val" type="email" value="${(meta.email||"").replace(/"/g,"&quot;")}" placeholder="correo@ejemplo.org" oninput="saveMeta('${c.id}','email',this.value)">
+          ${meta.email
+            ? `<a href="mailto:${meta.email}" style="font-size:12px;color:#378ADD;text-decoration:none;flex:1" title="Cambiar: haz clic para editar" onclick="editEmail(event,'${c.id}')">${meta.email}</a>`
+            : `<input class="meta-val" type="email" id="email-input-${c.id}" value="" placeholder="correo@ejemplo.org" oninput="saveMeta('${c.id}','email',this.value)" onblur="renderAll()">`
+          }
         </div>
         <div style="margin-top:8px">
           ${renderLinkRow(c.id,"drive","Drive")}
