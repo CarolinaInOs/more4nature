@@ -182,10 +182,10 @@ let state = {cases: JSON.parse(JSON.stringify(CASES_DEF)), checks:{}, links:{}, 
 let addingShFor = null;
 let saveTimer = null;
 
-// ---- SHARED STATE via Netlify Function ----
+// ---- SHARED STATE via Firebase ----
 async function loadState(){
   try {
-    const res = await fetch("/.netlify/functions/state");
+    const res = await fetch("https://more4nature-bf513-default-rtdb.firebaseio.com/state.json");
     const data = await res.json();
     if(data.checks) state.checks = data.checks;
     if(data.links) state.links = data.links;
@@ -205,8 +205,8 @@ async function persistNow(){
       const el = document.getElementById("note-"+k);
       if(el) state.notes[k] = el.value;
     });
-    await fetch("/.netlify/functions/state", {
-      method: "POST",
+    await fetch("https://more4nature-bf513-default-rtdb.firebaseio.com/state.json", {
+      method: "PUT",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(state)
     });
