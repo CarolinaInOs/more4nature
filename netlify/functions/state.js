@@ -23,8 +23,10 @@ exports.handler = async (event, context) => {
       return { statusCode: 200, headers, body: '{"ok":true}' };
     }
   } catch(e) {
-    return { statusCode: 500, headers, body: JSON.stringify({error: e.message}) };
+    return { 
+      statusCode: 500, 
+      headers, 
+      body: JSON.stringify({error: e.message, stack: e.stack}) 
+    };
   }
-
-  return { statusCode: 405, headers, body: '{"error":"Method not allowed"}' };
 };
