@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>More4nature — Coordinación</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:14px;color:#222;background:#fafafa;padding:24px}
+h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
+.subtitle{font-size:13px;color:#666;text-align:center;margin-bottom:20px}
+.diagram-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px;text-align:center}
+.diagram-section iframe{width:100%;height:500px;border:none;border-radius:4px}
+.legend{display:flex;align-items:center;gap:6px;font-size:11px;color:#378ADD;margin-top:8px}
+.legend-box{width:12px;height:12px;border:1.5px solid #378ADD;border-radius:2px;flex-shrink:0}
+.notes-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px}
+.notes-section h2{font-size:15px;font-weight:600;margin-bottom:10px;color:#333}
+.notes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.note-box{background:#fafafa;border:1px solid #ddd;border-radius:6px;overflow:hidden}
+.note-box-head{background:#f0f0f0;padding:7px 10px;font-size:12px;font-weight:600;color:#444}
+.note-box textarea{width:100%;border:none;background:transparent;padding:8px 10px;font-size:12px;color:#333;resize:vertical;min-height:80px;outline:none;font-family:Arial,sans-serif}
+.cases-section h2{font-size:15px;font-weight:600;margin-bottom:12px;color:#333}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.col-card{background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden}
+.col-head{padding:12px 14px;border-bottom:1px solid #eee;background:#f5f5f5}
+.col-head h3{font-size:14px;font-weight:600;color:#222}
+.col-meta{margin-top:8px}
+.meta-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px}
+.meta-label{font-size:11px;color:#888;min-width:140px}
+.meta-val{font-size:12px;color:#222;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;font-family:Arial,sans-serif;padding:1px 2px}
+.meta-val:focus{border-bottom-color:#378ADD}
+.link-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.link-label{font-size:11px;color:#888;min-width:80px}
+.link-input{font-size:12px;color:#378ADD;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;font-family:Arial,sans-serif;padding:1px 2px}
+.link-input:focus{border-bottom-color:#378ADD}
+.link-open{font-size:11px;color:#378ADD;text-decoration:none;margin-left:4px}
+.prog-bar{height:3px;background:#eee}
+.prog-fill{height:100%;background:#1D9E75;transition:width .3s}
+.checklist{padding:10px 14px 14px}
+.sec-label{font-size:10px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.05em;margin:10px 0 4px}
+.sec-label:first-child{margin-top:2px}
+.check-row{display:flex;align-items:flex-start;gap:7px;padding:2px 0}
+.check-row input[type=checkbox]{margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:#1D9E75}
+.check-row label{font-size:12px;color:#333;cursor:pointer;line-height:1.4}
+.check-row.done label{color:#bbb;text-decoration:line-through}
+.sh-block{margin-top:8px;border:1px solid #eee;border-radius:6px;overflow:hidden}
+.sh-head{display:flex;align-items:center;gap:6px;padding:7px 10px;background:#f8f8f8;cursor:pointer;user-select:none}
+.sh-name{font-size:12px;font-weight:600;color:#333;flex:1}
+.sh-badge{font-size:10px;color:#378ADD;background:#e8f2fc;padding:2px 6px;border-radius:4px}
+.sh-tog{font-size:12px;color:#999;transition:transform .2s}
+.sh-body{padding:6px 10px 10px}
+.sh-body.collapsed{display:none}
+.int-type{font-size:11px;font-weight:600;color:#555;margin:8px 0 4px;padding:3px 6px;background:#f0f0f0;border-radius:3px}
+.add-sh-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#378ADD;cursor:pointer;margin-top:10px;padding:6px 0;background:none;border:none;width:100%}
+.add-sh-form{margin-top:8px;border:1px solid #ddd;border-radius:6px;padding:10px;background:#fafafa}
+.form-row{margin-bottom:8px}
+.form-row label{font-size:11px;color:#666;display:block;margin-bottom:3px}
+.form-row input[type=text]{width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px}
+.combined-checks{margin:4px 0 8px;padding-left:4px}
+.combined-checks label{display:flex;align-items:center;gap:6px;font-size:12px;color:#333;margin-bottom:4px;cursor:pointer}
+.form-btns{display:flex;gap:8px}
+.form-btns button{font-size:12px;padding:5px 12px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer}
+.form-btns button:first-child{background:#378ADD;color:#fff;border-color:#378ADD}
+.saving{font-size:11px;color:#aaa;text-align:center;padding:.4rem 0}
+@media(max-width:700px){.cols{grid-template-columns:1fr}.notes-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<h1>More4nature</h1>
+<p class="subtitle">Seguimiento de coordinación del proyecto</p>
+
+<div class="diagram-section">
+  <iframe src="https://drive.google.com/file/d/1vhwlbh_sn8pdwDffdSQ4vpxR_uDUaAeF/preview" allowfullscreen></iframe>
+  <div class="legend"><div class="legend-box"></div> Encargado: Bosques del Mundo</div>
+</div>
+
+<div class="notes-section">
+  <h2>Notas</h2>
+  <div class="notes-grid">
+    <div class="note-box">
+      <div class="note-box-head">Coordinación general</div>
+      <textarea id="note-general" placeholder="Notas generales del proyecto..." oninput="saveNotes()"></textarea>
+    </div>
+    <div class="note-box">
+      <div class="note-box-head">Honduras — Guaruma</div>
+      <textarea id="note-honduras" placeholder="Notas para Honduras..." oninput="saveNotes()"></textarea>
+    </div>
+    <div class="note-box">
+      <div class="note-box-head">Bolivia — Monte Verde</div>
+      <textarea id="note-bolivia" placeholder="Notas para Bolivia..." oninput="saveNotes()"></textarea>
+    </div>
+    <div class="note-box">
+      <div class="note-box-head">Colombia — Human Forest</div>
+      <textarea id="note-colombia" placeholder="Notas para Colombia..." oninput="saveNotes()"></textarea>
+    </div>
+  </div>
+</div>
+
+<div class="cases-section">
+  <h2>Seguimiento por caso</h2>
+  <div class="cols" id="cases-grid"></div>
+</div>
+
+<div class="saving" id="saving-status"></div>
+
+<script>
+const CASES_DEF = [
+  {id:"honduras", title:"Honduras", partner:"Guaruma", stakeholders:[
+    {id:"sh_fupnapib", name:"FUPNAPIB", combined:false},
+    {id:"sh_juntas", name:"Juntas de Agua", combined:false},
+    {id:"sh_icf", name:"ICF", combined:false}
+  ]},
+  {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[]},
+  {id:"colombia", title:"Colombia", partner:"Human Forest", stakeholders:[]}
+];
+
+const INTERACTION_TYPES = [
+  {id:"reclu", name:"1: Reclutamiento", items:[
+    {k:"msg_enviado", t:"Mensaje de invitación enviado"},
+    {k:"msg_seguimiento", t:"Seguimiento de mensaje"},
+    {k:"msg_drive", t:"En DRIVE - originales"},
+    {k:"msg_sp", t:"En SHAREPOINT - original y en inglés"}
+  ]},
+  {id:"bienvenida", name:"2: Bienvenida", items:[
+    {k:"bien_consent_drive", t:"Consentimientos — En DRIVE - originales"},
+    {k:"bien_consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
+    {k:"bien_diseno_drive", t:"Diseño de taller — En DRIVE - original"},
+    {k:"bien_diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
+    {k:"bien_kobo", t:"Verificar KOBO participantes"},
+    {k:"bien_fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
+    {k:"bien_fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
+    {k:"bien_kobo_ref", t:"Realizar KOBO de reflexión"},
+    {k:"bien_base", t:"Actualizar interacción en base de datos"}
+  ]},
+  {id:"compromiso", name:"3: Compromiso", items:[
+    {k:"comp_consent_drive", t:"Consentimientos — En DRIVE - originales"},
+    {k:"comp_consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
+    {k:"comp_diseno_drive", t:"Diseño de taller — En DRIVE - original"},
+    {k:"comp_diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
+    {k:"comp_kobo", t:"Verificar KOBO participantes"},
+    {k:"comp_fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
+    {k:"comp_fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
+    {k:"comp_kobo_ref", t:"Realizar KOBO de reflexión"},
+    {k:"comp_base", t:"Actualizar interacción en base de datos"}
+  ]}
+];
+
+const PRE_ETAPAS = [
+  {k:"eval", t:"Evaluación inicial de Etapa 1 listo para verificación con el consorcio"},
+  {k:"reclu_plan", t:"Planificación de reclutamiento: Actores identificados y borradores de mensajes de invitación"},
+  {k:"bienvenida_plan", t:"Planificación de bienvenida: Borradores de diseño de interacciones"},
+  {k:"aprobacion", t:"Aprobación del consorcio para continuar con Etapa 2"}
+];
+
+let state = {cases: JSON.parse(JSON.stringify(CASES_DEF)), checks:{}, links:{}, responsables:{}, notes:{}};
+let addingShFor = null;
+let saveTimer = null;
+
+function loadState(){
+  try{
+    const s = localStorage.getItem("m4n_coord_v1");
+    if(s){
+      const saved = JSON.parse(s);
+      if(saved.checks) state.checks = saved.checks;
+      if(saved.links) state.links = saved.links;
+      if(saved.responsables) state.responsables = saved.responsables;
+      if(saved.notes) state.notes = saved.notes;
+      if(saved.cases) state.cases = saved.cases;
+    }
+  }catch(e){}
+}
+
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(()=>{
+    try{
+      localStorage.setItem("m4n_coord_v1", JSON.stringify(state));
+      showSaving("Guardado ✓");
+    }catch(e){ showSaving("Error al guardar"); }
+  }, 600);
+}
+
+function showSaving(msg){
+  const el = document.getElementById("saving-status");
+  if(el){ el.textContent = msg; setTimeout(()=> el.textContent="", 2000); }
+}
+
+function saveNotes(){
+  ["general","honduras","bolivia","colombia"].forEach(k=>{
+    const el = document.getElementById("note-"+k);
+    if(el) state.notes[k] = el.value;
+  });
+  persist();
+}
+
+function loadNotes(){
+  ["general","honduras","bolivia","colombia"].forEach(k=>{
+    const el = document.getElementById("note-"+k);
+    if(el && state.notes[k]) el.value = state.notes[k];
+  });
+}
+
+function toggleCheck(id){
+  state.checks[id] = !state.checks[id];
+  const row = document.getElementById("row-"+id);
+  const cb = document.getElementById("cb-"+id);
+  if(row) row.classList.toggle("done", !!state.checks[id]);
+  if(cb) cb.checked = !!state.checks[id];
+  updateAllProgress();
+  persist();
+}
+
+function updateAllProgress(){
+  state.cases.forEach(c=>{
+    const bar = document.getElementById("prog-"+c.id);
+    if(!bar) return;
+    let total = PRE_ETAPAS.length, done = 0;
+    PRE_ETAPAS.forEach(i=>{ if(state.checks[c.id+"_pre_"+i.k]) done++; });
+    c.stakeholders.forEach(sh=>{
+      INTERACTION_TYPES.forEach(itype=>{
+        itype.items.forEach(i=>{ total++; if(state.checks[sh.id+"_"+itype.id+"_"+i.k]) done++; });
+      });
+    });
+    bar.style.width = (total ? Math.round(done/total*100) : 0)+"%";
+  });
+}
+
+function renderCheckRow(id, text){
+  const checked = !!state.checks[id];
+  return `<div class="check-row${checked?" done":""}" id="row-${id}">
+    <input type="checkbox" id="cb-${id}" ${checked?"checked":""} onchange="toggleCheck('${id}')">
+    <label for="cb-${id}">${text}</label>
+  </div>`;
+}
+
+function renderStakeholder(caseId, sh){
+  let intHtml = "";
+  INTERACTION_TYPES.forEach(itype=>{
+    intHtml += `<div class="int-type">${itype.name}</div>`;
+    itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
+  });
+  const badge = sh.combined ? `<span class="sh-badge">combinada</span>` : "";
+  return `<div class="sh-block" id="shblock-${sh.id}">
+    <div class="sh-head" onclick="toggleSh('${sh.id}')">
+      <span class="sh-name">${sh.name}</span>${badge}
+      <span class="sh-tog" id="sht-${sh.id}">▾</span>
+    </div>
+    <div class="sh-body collapsed" id="shbody-${sh.id}">${intHtml}</div>
+  </div>`;
+}
+
+function toggleSh(id){
+  const body = document.getElementById("shbody-"+id);
+  const tog = document.getElementById("sht-"+id);
+  const c = body.classList.toggle("collapsed");
+  tog.style.transform = c ? "" : "rotate(180deg)";
+}
+
+function saveMeta(caseId, field, val){
+  if(!state.responsables[caseId]) state.responsables[caseId] = {};
+  state.responsables[caseId][field] = val;
+  persist();
+}
+
+function saveLink(caseId, linkKey, val){
+  state.links[caseId+"_"+linkKey] = val;
+  // update open button
+  const btn = document.getElementById("open-"+caseId+"-"+linkKey);
+  if(btn){ if(val){ btn.href=val; btn.style.display="inline"; } else { btn.style.display="none"; } }
+  persist();
+}
+
+function renderLinkRow(caseId, linkKey, label){
+  const val = state.links[caseId+"_"+linkKey] || "";
+  return `<div class="link-row">
+    <span class="link-label">${label}:</span>
+    <input class="link-input" type="text" value="${val.replace(/"/g,"&quot;")}" placeholder="https://..." oninput="saveLink('${caseId}','${linkKey}',this.value)">
+    <a id="open-${caseId}-${linkKey}" class="link-open" href="${val}" target="_blank" style="display:${val?'inline':'none'}">↗ abrir</a>
+  </div>`;
+}
+
+function renderAddShForm(caseId){
+  if(addingShFor !== caseId)
+    return `<button class="add-sh-btn" onclick="startAddSh('${caseId}')">+ Agregar actor</button>`;
+  const c = state.cases.find(x=>x.id===caseId);
+  const names = c.stakeholders.map(s=>s.name);
+  return `<div class="add-sh-form">
+    <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:8px">Nuevo actor</div>
+    <div class="form-row">
+      <label>Nombre del actor</label>
+      <input type="text" id="sh-name-${caseId}" placeholder="Ej: FUPNAPIB"/>
+    </div>
+    <div class="form-row">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="sh-comb-${caseId}" onchange="toggleCombUI('${caseId}')"> ¿Interacción combinada?
+      </label>
+    </div>
+    <div id="comb-ui-${caseId}" style="display:none">
+      <div style="font-size:11px;color:#888;margin-bottom:6px">Seleccionar actores participantes:</div>
+      <div class="combined-checks">
+        ${names.length ? names.map(n=>`<label><input type="checkbox" class="cpart-${caseId}" value="${n}"> ${n}</label>`).join("") : '<span style="font-size:11px;color:#bbb">Añade actores primero</span>'}
+      </div>
+      <div class="form-row" style="margin-top:6px">
+        <label>O añadir nombre libre</label>
+        <input type="text" id="sh-extra-${caseId}" placeholder="Otro nombre (opcional)"/>
+      </div>
+    </div>
+    <div class="form-btns">
+      <button onclick="confirmAddSh('${caseId}')">Agregar</button>
+      <button onclick="cancelAddSh()" style="background:#fff;color:#333">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+function toggleCombUI(caseId){
+  const cb = document.getElementById("sh-comb-"+caseId);
+  const ui = document.getElementById("comb-ui-"+caseId);
+  if(ui) ui.style.display = cb.checked ? "block" : "none";
+}
+function startAddSh(caseId){ addingShFor=caseId; renderAll(); }
+function cancelAddSh(){ addingShFor=null; renderAll(); }
+function confirmAddSh(caseId){
+  const nameEl = document.getElementById("sh-name-"+caseId);
+  if(!nameEl || !nameEl.value.trim()) return;
+  const combined = document.getElementById("sh-comb-"+caseId)?.checked || false;
+  let parts = [];
+  if(combined){
+    document.querySelectorAll(".cpart-"+caseId+":checked").forEach(el=>parts.push(el.value));
+    const extra = document.getElementById("sh-extra-"+caseId);
+    if(extra && extra.value.trim()) parts.push(extra.value.trim());
+  }
+  const c = state.cases.find(x=>x.id===caseId);
+  const finalName = combined && parts.length ? parts.join(" + ") : nameEl.value.trim();
+  c.stakeholders.push({id:"sh_"+Date.now(), name:finalName, combined, parts});
+  addingShFor = null;
+  renderAll();
+  persist();
+}
+
+function renderCase(c){
+  const meta = state.responsables[c.id] || {};
+  const preRows = PRE_ETAPAS.map(i=>renderCheckRow(c.id+"_pre_"+i.k, i.t)).join("");
+  const shBlocks = c.stakeholders.map(sh=>renderStakeholder(c.id, sh)).join("");
+  return `<div class="col-card">
+    <div class="col-head">
+      <h3>${c.title}</h3>
+      <div class="col-meta">
+        <div class="meta-row">
+          <span class="meta-label">Socio implementador:</span>
+          <input class="meta-val" type="text" value="${(meta.partner||c.partner||"").replace(/"/g,"&quot;")}" placeholder="${c.partner}" oninput="saveMeta('${c.id}','partner',this.value)">
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Responsable:</span>
+          <input class="meta-val" type="text" value="${(meta.responsable||"").replace(/"/g,"&quot;")}" placeholder="Nombre del responsable" oninput="saveMeta('${c.id}','responsable',this.value)">
+        </div>
+        <div style="margin-top:8px">
+          ${renderLinkRow(c.id,"drive","Drive")}
+          ${renderLinkRow(c.id,"sharepoint","SharePoint")}
+        </div>
+      </div>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="prog-${c.id}" style="width:0%"></div></div>
+    <div class="checklist">
+      <div class="sec-label">Pasos generales</div>
+      ${preRows}
+      <div class="sec-label" style="margin-top:12px">Interacciones de Etapa 2</div>
+      ${shBlocks}
+      ${renderAddShForm(c.id)}
+    </div>
+  </div>`;
+}
+
+function renderAll(){
+  document.getElementById("cases-grid").innerHTML = state.cases.map(renderCase).join("");
+  updateAllProgress();
+}
+
+loadState();
+renderAll();
+loadNotes();
+</script>
+</body>
+</html>
