@@ -41,6 +41,8 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .sec-label:first-child{margin-top:2px}
 .check-row{display:flex;align-items:flex-start;gap:7px;padding:2px 0}
 .check-row input[type=checkbox]{margin-top:2px;flex-shrink:0;cursor:pointer;accent-color:#1D9E75}
+input[type=checkbox]{accent-color:#1D9E75}
+input[type=radio]{accent-color:#1D9E75}
 .check-row label{font-size:12px;color:#333;cursor:pointer;line-height:1.4}
 .check-row.done label{color:#bbb;text-decoration:line-through}
 .sh-block{margin-top:8px;border:1px solid #eee;border-radius:6px;overflow:hidden}
@@ -259,6 +261,12 @@ function loadNotes(){
 }
 
 // ---- CHECKBOXES ----
+function saveRelevance(shId, val){
+  state.checks[shId+"_reclu_relevante"] = val;
+  queueSave();
+  renderAll();
+}
+
 function saveCheckVal(id, val){
   state.checks[id] = val;
   queueSave();
@@ -341,19 +349,25 @@ function renderStakeholder(caseId, sh){
     if(itype.id === "reclu"){
       // Reclutamiento: show relevance checkbox first
       const relevKey = sh.id+"_reclu_relevante";
-      const isRelevant = !!state.checks[relevKey];
+      const relevVal = state.checks[relevKey]||"";
+      const isRelevant = relevVal === "si";
+      const isNo = relevVal === "no";
       intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
         <span style="flex:1">1: Reclutamiento</span>
         <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
       </div>`;
-      intHtml += `<div class="check-row" style="padding:4px 0 2px">
-        <input type="checkbox" id="cb-${relevKey}" ${isRelevant?"checked":""} onchange="toggleCheck('${relevKey}')">
-        <label for="cb-${relevKey}" style="font-size:12px;color:#555">¿Es relevante?</label>
+      intHtml += `<div style="display:flex;align-items:center;gap:12px;padding:6px 0 4px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer">
+          <input type="radio" name="relev-${sh.id}" value="si" ${isRelevant?"checked":""} onchange="saveRelevance('${sh.id}','si')" style="accent-color:#1D9E75"> Es relevante
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#555;cursor:pointer">
+          <input type="radio" name="relev-${sh.id}" value="no" ${isNo?"checked":""} onchange="saveRelevance('${sh.id}','no')" style="accent-color:#1D9E75"> No es relevante
+        </label>
       </div>`;
       if(isRelevant){
         itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
-      } else {
-        intHtml += `<div style="font-size:11px;color:#aaa;padding:2px 0 6px;font-style:italic">No relevante</div>`;
+      } else if(isNo){
+        intHtml += `<div style="font-size:11px;color:#aaa;padding:2px 0 6px;font-style:italic">No relevante — continuar con siguiente interacción</div>`;
       }
     } else {
       // Bienvenida, Compromiso: editable name
