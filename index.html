@@ -337,11 +337,36 @@ function renderStakeholder(caseId, sh){
   INTERACTION_TYPES.forEach(itype=>{
     const dateKey = sh.id+"_date_"+itype.id;
     const dateVal = (state.checks[dateKey]||"").replace(/"/g,"&quot;");
-    intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
-      <span style="flex:1">${itype.name}</span>
-      <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
-    </div>`;
-    itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
+
+    if(itype.id === "reclu"){
+      // Reclutamiento: show relevance checkbox first
+      const relevKey = sh.id+"_reclu_relevante";
+      const isRelevant = !!state.checks[relevKey];
+      intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
+        <span style="flex:1">1: Reclutamiento</span>
+        <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
+      </div>`;
+      intHtml += `<div class="check-row" style="padding:4px 0 2px">
+        <input type="checkbox" id="cb-${relevKey}" ${isRelevant?"checked":""} onchange="toggleCheck('${relevKey}')">
+        <label for="cb-${relevKey}" style="font-size:12px;color:#555">¿Es relevante?</label>
+      </div>`;
+      if(isRelevant){
+        itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
+      } else {
+        intHtml += `<div style="font-size:11px;color:#aaa;padding:2px 0 6px;font-style:italic">No relevante</div>`;
+      }
+    } else {
+      // Bienvenida, Compromiso: editable name
+      const nameKey = sh.id+"_intname_"+itype.id;
+      const intNum = itype.id === "bienvenida" ? "2" : "3";
+      const savedName = (state.checks[nameKey]||"").replace(/"/g,"&quot;");
+      intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
+        <span>${intNum}:</span>
+        <input type="text" value="${savedName}" placeholder="Nombre de la interacción" style="font-size:11px;font-weight:600;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif" oninput="saveCheckVal('${nameKey}',this.value)">
+        <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
+      </div>`;
+      itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
+    }
   });
   (sh.extraInts||[]).forEach((ei, idx)=>{
     const num = 4 + idx;
