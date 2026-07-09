@@ -71,12 +71,37 @@ input[type=radio]{accent-color:#1D9E75}
 .form-btns button:first-child{background:#378ADD;color:#fff;border-color:#378ADD}
 .saving{font-size:11px;color:#aaa;text-align:center;padding:.4rem 0;min-height:20px}
 .loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.8);display:flex;align-items:center;justify-content:center;font-size:14px;color:#666;z-index:999}
+.login-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:#fafafa;display:flex;align-items:center;justify-content:center;z-index:1000}
+.login-box{background:#fff;border:1px solid #ddd;border-radius:10px;padding:32px 36px;text-align:center;max-width:360px}
+.login-box h2{font-size:17px;margin-bottom:8px;color:#222}
+.login-box p{font-size:13px;color:#666;margin-bottom:20px;line-height:1.5}
+.login-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid #ccc;border-radius:6px;padding:10px 18px;font-size:13px;font-weight:600;color:#333;cursor:pointer}
+.login-btn:hover{background:#f5f5f5}
+.login-error{font-size:12px;color:#cc4444;margin-top:14px;display:none}
+.app-hidden{display:none}
+.signout-bar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:#666}
+.signout-bar button{font-size:12px;color:#378ADD;background:none;border:none;cursor:pointer;text-decoration:underline}
 @media(max-width:700px){.cols{grid-template-columns:1fr}.notes-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
 
 <div class="loading-overlay" id="loading">Cargando datos...</div>
+
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <h2>More4nature — Acceso restringido</h2>
+    <p>Inicia sesión con tu cuenta de Google <strong>@verdensskove.org</strong> para ver y editar esta herramienta.</p>
+    <button class="login-btn" onclick="signIn()">Iniciar sesión con Google</button>
+    <div class="login-error" id="login-error">Esta herramienta solo está disponible para cuentas @verdensskove.org.</div>
+  </div>
+</div>
+
+<div id="app-content" class="app-hidden">
+<div class="signout-bar">
+  <span id="signed-in-as"></span>
+  <button onclick="signOutUser()">Cerrar sesión</button>
+</div>
 
 <h1>More4nature</h1>
 <p class="subtitle">Coordinación interna del proyecto</p>
@@ -118,6 +143,10 @@ input[type=radio]{accent-color:#1D9E75}
 </div>
 
 <div class="saving" id="saving-status"></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
 <script>
 const CASES_DEF = [
@@ -189,7 +218,8 @@ const FB = "https://more4nature-bf513-default-rtdb.firebaseio.com";
 
 async function loadState(){
   try {
-    const res = await fetch(FB + "/state.json");
+    const idToken = await getIdTokenSafe();
+    const res = await fetch(FB + "/state.json?auth=" + idToken);
     const data = await res.json();
     if(data && typeof data === "object"){
       if(data.checks && typeof data.checks === "object") state.checks = data.checks;
@@ -231,7 +261,8 @@ async function persistNow(){
       const el = document.getElementById("note-"+k);
       if(el) state.notes[k] = el.value;
     });
-    await fetch(FB + "/state.json", {
+    const idToken = await getIdTokenSafe();
+    await fetch(FB + "/state.json?auth=" + idToken, {
       method: "PUT",
       headers: {"Content-Type":"application/json"},
       body: JSON.stringify(state)
@@ -559,7 +590,67 @@ async function init(){
   loadNotes();
 }
 
-init();
+// ---- AUTH ----
+// TODO: replace with your real values from Firebase Console > Project Settings > General > Your apps
+const firebaseConfig = {
+  apiKey: "AIzaSyCcFjYaMLoQiHAAvqifnOdlh87Csvsrl6o",
+  authDomain: "more4nature-bf513.firebaseapp.com",
+  databaseURL: "https://more4nature-bf513-default-rtdb.firebaseio.com",
+  projectId: "more4nature-bf513",
+  storageBucket: "more4nature-bf513.firebasestorage.app",
+  messagingSenderId: "874932049885",
+  appId: "1:874932049885:web:03b335e33e3f2b9c818834"
+};
+firebase.initializeApp(firebaseConfig);
+
+const ALLOWED_DOMAIN = "verdensskove.org";
+
+async function getIdTokenSafe(){
+  const user = firebase.auth().currentUser;
+  if(!user) throw new Error("Not signed in");
+  return await user.getIdToken();
+}
+
+function signIn(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ hd: ALLOWED_DOMAIN }); // hints Google to show that domain's accounts first
+  document.getElementById("login-error").style.display = "none";
+  firebase.auth().signInWithPopup(provider).catch(err=>{
+    console.error(err);
+    document.getElementById("login-error").textContent = "No se pudo iniciar sesión: " + err.message;
+    document.getElementById("login-error").style.display = "block";
+  });
+}
+
+function signOutUser(){
+  firebase.auth().signOut();
+}
+
+firebase.auth().onAuthStateChanged(async (user) => {
+  const loginOverlay = document.getElementById("login-overlay");
+  const appContent = document.getElementById("app-content");
+  const loadingOverlay = document.getElementById("loading");
+
+  if(!user){
+    loginOverlay.style.display = "flex";
+    appContent.classList.add("app-hidden");
+    loadingOverlay.style.display = "none";
+    return;
+  }
+
+  const email = user.email || "";
+  if(!email.endsWith("@" + ALLOWED_DOMAIN)){
+    document.getElementById("login-error").textContent = "Esta herramienta solo está disponible para cuentas @" + ALLOWED_DOMAIN + ". Sesión iniciada como: " + email;
+    document.getElementById("login-error").style.display = "block";
+    await firebase.auth().signOut();
+    return;
+  }
+
+  loginOverlay.style.display = "none";
+  appContent.classList.remove("app-hidden");
+  document.getElementById("signed-in-as").textContent = email;
+  await init();
+});
 </script>
 </body>
 </html>
