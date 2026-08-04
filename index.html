@@ -162,7 +162,7 @@ const CASES_DEF = [
 const INTERACTION_TYPES = [
   {id:"reclu", name:"1: Reclutamiento", items:[
     {k:"msg_enviado", t:"Mensaje de invitación enviado"},
-    {k:"msg_seguimiento", t:"Seguimiento de mensaje"},
+    {k:"msg_seguimiento", t:"Seguimiento de mensaje en SHAREPOINT"},
     {k:"msg_drive", t:"En DRIVE - originales"},
     {k:"msg_sp", t:"En SHAREPOINT - original y en inglés"}
   ]},
@@ -176,18 +176,21 @@ const INTERACTION_TYPES = [
     {k:"bien_fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
     {k:"bien_kobo_ref", t:"Realizar KOBO de reflexión"},
     {k:"bien_base", t:"Actualizar interacción en base de datos"}
-  ]},
-  {id:"compromiso", name:"3: Compromiso", items:[
-    {k:"comp_consent_drive", t:"Consentimientos — En DRIVE - originales"},
-    {k:"comp_consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
-    {k:"comp_diseno_drive", t:"Diseño de taller — En DRIVE - original"},
-    {k:"comp_diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
-    {k:"comp_kobo", t:"Verificar KOBO participantes"},
-    {k:"comp_fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
-    {k:"comp_fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
-    {k:"comp_kobo_ref", t:"Realizar KOBO de reflexión"},
-    {k:"comp_base", t:"Actualizar interacción en base de datos"}
   ]}
+];
+
+// Legacy 'compromiso' item keys, kept only so we can migrate any existing checked
+// data (e.g. FUPNAPIB) into a deletable extra interaction. Not used for new stakeholders.
+const LEGACY_COMPROMISO_ITEMS = [
+  {k:"comp_consent_drive", extraK:"consent_drive"},
+  {k:"comp_consent_sp", extraK:"consent_sp"},
+  {k:"comp_diseno_drive", extraK:"diseno_drive"},
+  {k:"comp_diseno_sp", extraK:"diseno_sp"},
+  {k:"comp_kobo", extraK:"kobo"},
+  {k:"comp_fotos_drive", extraK:"fotos_drive"},
+  {k:"comp_fotos_sp", extraK:"fotos_sp"},
+  {k:"comp_kobo_ref", extraK:"kobo_ref"},
+  {k:"comp_base", extraK:"base"}
 ];
 
 const EXTRA_INT_ITEMS = [
@@ -251,7 +254,45 @@ async function loadState(){
   } catch(e) {
     console.warn("Could not load shared state, using defaults", e);
   }
+  await migrateLegacyCompromiso();
   document.getElementById("loading").style.display = "none";
+}
+
+// One-time migration: any stakeholder with existing data under the old hardcoded
+// "compromiso" block (name, date, or any checked item) gets that data MOVED into a
+// normal, deletable extra interaction. The old keys are cleared and the result is
+// saved immediately, so if someone later deletes that block, it stays deleted instead
+// of reappearing on the next load. Safe to call every time — it's a no-op once done.
+async function migrateLegacyCompromiso(){
+  let migratedAny = false;
+  state.cases.forEach(c=>{
+    (c.stakeholders||[]).forEach(sh=>{
+      const legacyId = "legacy_compromiso_" + sh.id;
+      const alreadyMigrated = (sh.extraInts||[]).some(ei => ei.id === legacyId);
+      if(alreadyMigrated) return;
+
+      const nameKey = sh.id + "_intname_compromiso";
+      const dateKey = sh.id + "_date_compromiso";
+      const legacyName = state.checks[nameKey] || "";
+      const legacyDate = state.checks[dateKey] || "";
+      const hasAnyCheck = LEGACY_COMPROMISO_ITEMS.some(i => !!state.checks[sh.id+"_compromiso_"+i.k]);
+
+      if(!legacyName && !legacyDate && !hasAnyCheck) return; // nothing to migrate for this stakeholder
+
+      if(!sh.extraInts) sh.extraInts = [];
+      sh.extraInts.unshift({id: legacyId, name: legacyName, num: 3});
+      state.checks[sh.id+"_extra_date_"+legacyId] = legacyDate;
+      LEGACY_COMPROMISO_ITEMS.forEach(i=>{
+        const oldVal = state.checks[sh.id+"_compromiso_"+i.k];
+        if(oldVal) state.checks[sh.id+"_extra_"+legacyId+"_"+i.extraK] = oldVal;
+        delete state.checks[sh.id+"_compromiso_"+i.k];
+      });
+      delete state.checks[nameKey];
+      delete state.checks[dateKey];
+      migratedAny = true;
+    });
+  });
+  if(migratedAny) await persistNow();
 }
 
 async function persistNow(){
@@ -303,7 +344,14 @@ function saveCheckVal(id, val){
   queueSave();
 }
 
+const ADMIN_EMAILS = ["cio@verdensskove.org", "jnh@verdensskove.org"];
+let currentUserEmail = "";
+
+function isSharePointKey(id){ return id.endsWith("_sp"); }
+function isAdminUser(){ return ADMIN_EMAILS.includes(currentUserEmail.toLowerCase()); }
+
 function toggleCheck(id){
+  if(isSharePointKey(id) && !isAdminUser()) return; // blocked: SharePoint items are admin-only
   state.checks[id] = !state.checks[id];
   const row = document.getElementById("row-"+id);
   const cb = document.getElementById("cb-"+id);
@@ -333,9 +381,12 @@ function updateAllProgress(){
 
 function renderCheckRow(id, text){
   const checked = !!state.checks[id];
-  return `<div class="check-row${checked?" done":""}" id="row-${id}">
-    <input type="checkbox" id="cb-${id}" ${checked?"checked":""} onchange="toggleCheck('${id}')">
-    <label for="cb-${id}">${text}</label>
+  const restricted = isSharePointKey(id) && !isAdminUser();
+  const lockNote = restricted ? ` title="Solo pueden marcar esto: ${ADMIN_EMAILS.join(", ")}"` : "";
+  const lockIcon = restricted ? ` 🔒` : "";
+  return `<div class="check-row${checked?" done":""}" id="row-${id}"${lockNote}>
+    <input type="checkbox" id="cb-${id}" ${checked?"checked":""} ${restricted?"disabled":""} onchange="toggleCheck('${id}')">
+    <label for="cb-${id}" style="${restricted?"color:#aaa":""}">${text}${lockIcon}</label>
   </div>`;
 }
 
@@ -356,7 +407,7 @@ function addExtraInt(caseId, shId){
   const c = state.cases.find(x=>x.id===caseId);
   const sh = c.stakeholders.find(x=>x.id===shId);
   if(!sh.extraInts) sh.extraInts = [];
-  const num = 4 + sh.extraInts.length;
+  const num = 3 + sh.extraInts.length;
   sh.extraInts.push({id:"ei_"+Date.now(), name:"", num});
   renderAll();
   queueSave();
@@ -401,9 +452,9 @@ function renderStakeholder(caseId, sh){
         intHtml += `<div style="font-size:11px;color:#aaa;padding:2px 0 6px;font-style:italic">No relevante — continuar con siguiente interacción</div>`;
       }
     } else {
-      // Bienvenida, Compromiso: editable name
+      // Bienvenida: editable name, always block "2:"
       const nameKey = sh.id+"_intname_"+itype.id;
-      const intNum = itype.id === "bienvenida" ? "2" : "3";
+      const intNum = "2";
       const savedName = (state.checks[nameKey]||"").replace(/"/g,"&quot;");
       intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
         <span>${intNum}:</span>
@@ -414,7 +465,7 @@ function renderStakeholder(caseId, sh){
     }
   });
   (sh.extraInts||[]).forEach((ei, idx)=>{
-    const num = 4 + idx;
+    const num = 3 + idx;
     const eiDateKey = sh.id+"_extra_date_"+ei.id;
     const eiDateVal = (state.checks[eiDateKey]||"").replace(/"/g,"&quot;");
     intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:6px">
@@ -604,6 +655,13 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const ALLOWED_DOMAIN = "verdensskove.org";
+const ALLOWED_EXTRA_EMAILS = ["m.jimenez@humanforest.com.co"];
+
+function isAllowedEmail(email){
+  if(!email) return false;
+  const e = email.toLowerCase();
+  return e.endsWith("@" + ALLOWED_DOMAIN) || ALLOWED_EXTRA_EMAILS.includes(e);
+}
 
 async function getIdTokenSafe(){
   const user = firebase.auth().currentUser;
@@ -613,7 +671,6 @@ async function getIdTokenSafe(){
 
 function signIn(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ hd: ALLOWED_DOMAIN }); // hints Google to show that domain's accounts first
   document.getElementById("login-error").style.display = "none";
   firebase.auth().signInWithPopup(provider).catch(err=>{
     console.error(err);
@@ -639,8 +696,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
   }
 
   const email = user.email || "";
-  if(!email.endsWith("@" + ALLOWED_DOMAIN)){
-    document.getElementById("login-error").textContent = "Esta herramienta solo está disponible para cuentas @" + ALLOWED_DOMAIN + ". Sesión iniciada como: " + email;
+  if(!isAllowedEmail(email)){
+    document.getElementById("login-error").textContent = "Esta herramienta solo está disponible para cuentas @" + ALLOWED_DOMAIN + " o cuentas autorizadas. Sesión iniciada como: " + email;
     document.getElementById("login-error").style.display = "block";
     await firebase.auth().signOut();
     return;
@@ -649,6 +706,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
   loginOverlay.style.display = "none";
   appContent.classList.remove("app-hidden");
   document.getElementById("signed-in-as").textContent = email;
+  currentUserEmail = email;
   await init();
 });
 </script>
