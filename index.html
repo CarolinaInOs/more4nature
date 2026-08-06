@@ -473,8 +473,8 @@ function renderStakeholder(caseId, sh){
     const eiDateKey = sh.id+"_extra_date_"+ei.id;
     const eiDateVal = (state.checks[eiDateKey]||"").replace(/"/g,"&quot;");
     intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:6px">
-      <span>${num}.</span>
-      <input class="int-objetivo" type="text" value="${(ei.name||"").replace(/"/g,"&quot;")}" placeholder="Escribir objetivo de la interacción" oninput="saveExtraIntName('${sh.id}','${ei.id}',this.value)">
+      <span>${num}:</span>
+      <input type="text" value="${(ei.name||"").replace(/"/g,"&quot;")}" placeholder="Escribir objetivo de la interacción" style="font-size:11px;font-weight:600;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif" oninput="saveExtraIntName('${sh.id}','${ei.id}',this.value)">
       <input type="text" value="${eiDateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${eiDateKey}',this.value)">
       <button class="sh-delete" onclick="deleteExtraInt('${caseId}','${sh.id}','${ei.id}')" title="Eliminar interacción">✕</button>
     </div>`;
@@ -659,7 +659,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const ALLOWED_DOMAIN = "verdensskove.org";
-const ALLOWED_EXTRA_EMAILS = ["m.jimenez@humanforest.com.co"];
+const ALLOWED_EXTRA_EMAILS = ["mfjimenezp.hf@gmail.com"];
 
 function isAllowedEmail(email){
   if(!email) return false;
