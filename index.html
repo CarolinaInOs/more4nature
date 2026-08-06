@@ -167,14 +167,16 @@ const INTERACTION_TYPES = [
     {k:"msg_sp", t:"En SHAREPOINT - original y en inglés"}
   ]},
   {id:"bienvenida", name:"2: Bienvenida", items:[
-    {k:"bien_consent_drive", t:"Consentimientos — En DRIVE - originales"},
-    {k:"bien_consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
-    {k:"bien_diseno_drive", t:"Diseño de taller — En DRIVE - original"},
-    {k:"bien_diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
+    {k:"bien_participantes_drive", t:"Lista de participantes — En DRIVE"},
+    {k:"bien_participantes_sp", t:"Lista de participantes — En SHAREPOINT"},
+    {k:"bien_consent_drive", t:"Consentimientos — En DRIVE"},
+    {k:"bien_consent_sp", t:"Consentimientos — En SHAREPOINT"},
+    {k:"bien_diseno_drive", t:"Diseño de taller — En DRIVE"},
+    {k:"bien_diseno_sp", t:"Diseño de taller — En SHAREPOINT"},
+    {k:"bien_fotos_drive", t:"Fotos y resumen — En DRIVE"},
+    {k:"bien_fotos_sp", t:"Fotos y resumen — En SHAREPOINT"},
     {k:"bien_kobo", t:"Verificar KOBO participantes"},
-    {k:"bien_fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
-    {k:"bien_fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
-    {k:"bien_kobo_ref", t:"Realizar KOBO de reflexión"},
+    {k:"bien_kobo_ref", t:"Verificar KOBO de reflexión"},
     {k:"bien_base", t:"Actualizar interacción en base de datos"}
   ]}
 ];
@@ -194,14 +196,16 @@ const LEGACY_COMPROMISO_ITEMS = [
 ];
 
 const EXTRA_INT_ITEMS = [
-  {k:"consent_drive", t:"Consentimientos — En DRIVE - originales"},
-  {k:"consent_sp", t:"Consentimientos — En SHAREPOINT - originales y en inglés"},
-  {k:"diseno_drive", t:"Diseño de taller — En DRIVE - original"},
-  {k:"diseno_sp", t:"Diseño de taller — En SHAREPOINT - original y en inglés"},
+  {k:"participantes_drive", t:"Lista de participantes — En DRIVE"},
+  {k:"participantes_sp", t:"Lista de participantes — En SHAREPOINT"},
+  {k:"consent_drive", t:"Consentimientos — En DRIVE"},
+  {k:"consent_sp", t:"Consentimientos — En SHAREPOINT"},
+  {k:"diseno_drive", t:"Diseño de taller — En DRIVE"},
+  {k:"diseno_sp", t:"Diseño de taller — En SHAREPOINT"},
+  {k:"fotos_drive", t:"Fotos y resumen — En DRIVE"},
+  {k:"fotos_sp", t:"Fotos y resumen — En SHAREPOINT"},
   {k:"kobo", t:"Verificar KOBO participantes"},
-  {k:"fotos_drive", t:"Subir fotos y notas — En DRIVE - originales"},
-  {k:"fotos_sp", t:"Subir fotos y notas — En SHAREPOINT - originales y en inglés"},
-  {k:"kobo_ref", t:"Realizar KOBO de reflexión"},
+  {k:"kobo_ref", t:"Verificar KOBO de reflexión"},
   {k:"base", t:"Actualizar interacción en base de datos"}
 ];
 
@@ -458,7 +462,7 @@ function renderStakeholder(caseId, sh){
       const savedName = (state.checks[nameKey]||"").replace(/"/g,"&quot;");
       intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
         <span>${intNum}:</span>
-        <input type="text" value="${savedName}" placeholder="Nombre de la interacción" style="font-size:11px;font-weight:600;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif" oninput="saveCheckVal('${nameKey}',this.value)">
+        <input type="text" value="${savedName}" placeholder="Escribir objetivo de la interacción" style="font-size:11px;font-weight:600;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif" oninput="saveCheckVal('${nameKey}',this.value)">
         <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
       </div>`;
       itype.items.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_"+itype.id+"_"+i.k, i.t); });
