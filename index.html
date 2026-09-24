@@ -64,6 +64,8 @@ input[type=radio]{accent-color:#1D9E75}
 .form-row{margin-bottom:8px}
 .form-row label{font-size:11px;color:#666;display:block;margin-bottom:3px}
 .form-row input[type=text]{width:100%;font-size:12px;padding:5px 8px;border:1px solid #ddd;border-radius:4px}
+.sh-extra-input{margin-bottom:6px}
+.sh-extra-input:last-child{margin-bottom:0}
 .combined-checks{margin:4px 0 8px;padding-left:4px}
 .combined-checks label{display:flex;align-items:center;gap:6px;font-size:12px;color:#333;margin-bottom:4px;cursor:pointer}
 .form-btns{display:flex;gap:8px}
@@ -238,9 +240,9 @@ const PRE_ETAPAS = [
 // Drives the repeated per-stage sections in renderCase(): gate checkboxes (if any),
 // then "Interacciones de Etapa N", then that stage's independent actor list.
 const STAGES = [
-  {key:"e2", num:2, gateLabel:"Pasos generales", gate: PRE_ETAPAS},
-  {key:"e3", num:3, gateLabel:"Pasos generales - Etapa 3", gate: STAGE_GATE_E3},
-  {key:"e4", num:4, gateLabel:"Pasos generales - Etapa 4", gate: STAGE_GATE_E4},
+  {key:"e2", num:2, gateLabel:"Pasos iniciales", gate: PRE_ETAPAS},
+  {key:"e3", num:3, gateLabel:null, gate: STAGE_GATE_E3},
+  {key:"e4", num:4, gateLabel:null, gate: STAGE_GATE_E4},
   {key:"e5", num:5, gateLabel:null, gate: []}
 ];
 
@@ -586,7 +588,7 @@ function renderAddShForm(caseId, stageKey){
   if(addingShFor !== comboKey)
     return `<button class="add-sh-btn" onclick="startAddSh('${caseId}','${stageKey}')">+ Agregar actor</button>`;
   const c = state.cases.find(x=>x.id===caseId);
-  const names = (c[stageField(stageKey)] || []).map(s=>s.name);
+  const names = (c.stakeholders || []).map(s=>s.name); // always suggest Etapa 2's actors — they usually recur in later stages
   return `<div class="add-sh-form">
     <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:8px">Nuevo actor</div>
     <div class="form-row">
@@ -601,8 +603,11 @@ function renderAddShForm(caseId, stageKey){
       </div>
     </div>
     <div class="form-row">
-      <label>O escribir nombre nuevo</label>
-      <input type="text" id="sh-extra-${comboKey}" placeholder="Nombre del actor"/>
+      <label>O escribir nombre(s) nuevo(s)</label>
+      <div id="sh-extra-list-${comboKey}">
+        <input type="text" class="sh-extra-input" placeholder="Nombre del actor"/>
+      </div>
+      <button type="button" onclick="addExtraNameField('${comboKey}')" style="font-size:11px;color:#378ADD;background:none;border:none;cursor:pointer;padding:4px 0">+ Agregar otro nombre</button>
     </div>
     <div class="form-btns">
       <button onclick="confirmAddSh('${caseId}','${stageKey}')">Agregar</button>
@@ -626,14 +631,26 @@ function editEmail(event, caseId){
 function startAddSh(caseId, stageKey){ addingShFor = caseId + "__" + stageKey; renderAll(); }
 function cancelAddSh(){ addingShFor=null; renderAll(); }
 
+function addExtraNameField(comboKey){
+  const container = document.getElementById("sh-extra-list-"+comboKey);
+  if(!container) return;
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "sh-extra-input";
+  input.placeholder = "Nombre del actor";
+  container.appendChild(input);
+  input.focus();
+}
+
 function confirmAddSh(caseId, stageKey){
   const comboKey = caseId + "__" + stageKey;
   const combined = document.getElementById("sh-comb-"+comboKey)?.checked || false;
   let parts = [];
   document.querySelectorAll(".cpart-"+comboKey+":checked").forEach(el=>parts.push(el.value));
-  const extra = document.getElementById("sh-extra-"+comboKey);
-  const extraVal = extra ? extra.value.trim() : "";
-  if(extraVal) parts.push(extraVal);
+  document.querySelectorAll("#sh-extra-list-"+comboKey+" .sh-extra-input").forEach(el=>{
+    const v = el.value.trim();
+    if(v) parts.push(v);
+  });
   if(!parts.length) return;
   const c = state.cases.find(x=>x.id===caseId);
   const field = stageField(stageKey);
@@ -651,7 +668,7 @@ function renderCase(c){
 
   const stageBlocks = STAGES.map(stage=>{
     const gateHtml = stage.gate.length
-      ? `<div class="sec-label" style="margin-top:12px">${stage.gateLabel}</div>` +
+      ? (stage.gateLabel ? `<div class="sec-label" style="margin-top:12px">${stage.gateLabel}</div>` : `<div style="margin-top:12px"></div>`) +
         stage.gate.map(i=>renderCheckRow(c.id+"_pre_"+i.k, i.t)).join("")
       : "";
     const arr = c[stageField(stage.key)] || [];
