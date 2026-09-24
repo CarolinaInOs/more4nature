@@ -107,7 +107,7 @@ input[type=radio]{accent-color:#1D9E75}
 <p class="subtitle">Coordinación interna del proyecto</p>
 
 <div class="diagram-section">
-  <iframe src="https://drive.google.com/file/d/1vhwlbh_sn8pdwDffdSQ4vpxR_uDUaAeF/preview" allowfullscreen></iframe>
+  <iframe src="https://drive.google.com/file/d/16PuVb_ASXidfEjkFmOTu5UrGsW7NHFsy/preview" allowfullscreen></iframe>
 </div>
 
 <div class="notes-section">
@@ -154,13 +154,30 @@ const CASES_DEF = [
     {id:"sh_fupnapib", name:"FUPNAPIB", combined:false, extraInts:[]},
     {id:"sh_juntas", name:"Juntas de Agua", combined:false, extraInts:[]},
     {id:"sh_icf", name:"ICF", combined:false, extraInts:[]}
-  ]},
-  {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[]},
-  {id:"colombia", title:"Colombia", partner:"Human Forest", stakeholders:[]}
+  ], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]},
+  {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]},
+  {id:"colombia", title:"Colombia", partner:"Human Forest", stakeholders:[], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]}
+];
+
+// Maps a stage key to the field on each case object holding that stage's independent
+// actor list. "e2" keeps the original field name "stakeholders" so existing live data
+// (FUPNAPIB, Juntas de Agua, ICF, etc.) keeps working without any migration.
+function stageField(stageKey){ return stageKey === "e2" ? "stakeholders" : "stakeholders_" + stageKey; }
+
+// Extra gate checkboxes shown before each new stage's interactions section (after the
+// previous stage's "+ Agregar actor"). Etapa 2 keeps using the original, longer
+// PRE_ETAPAS list below. Etapa 5 has none, since there's no "next stage" to approve into.
+const STAGE_GATE_E3 = [
+  {k:"planif_e3", t:"Planificación de etapa 3"},
+  {k:"aprob_e3", t:"Aprobación del consorcio para continuar con Etapa 3"}
+];
+const STAGE_GATE_E4 = [
+  {k:"planif_e4", t:"Planificación de etapa 4"},
+  {k:"aprob_e4", t:"Aprobación del consorcio para continuar con Etapa 4"}
 ];
 
 const INTERACTION_TYPES = [
-  {id:"reclu", name:"1: Reclutamiento", items:[
+  {id:"reclu", name:"1: Invitación", items:[
     {k:"msg_enviado", t:"Mensaje de invitación enviado"},
     {k:"msg_seguimiento", t:"Seguimiento de mensaje en SHAREPOINT"},
     {k:"msg_drive", t:"En DRIVE - originales"},
@@ -177,7 +194,8 @@ const INTERACTION_TYPES = [
     {k:"bien_fotos_sp", t:"Fotos y resumen — En SHAREPOINT"},
     {k:"bien_kobo", t:"Verificar KOBO participantes"},
     {k:"bien_kobo_ref", t:"Verificar KOBO de reflexión"},
-    {k:"bien_base", t:"Actualizar interacción en base de datos"}
+    {k:"bien_base", t:"Actualizar interacción en base de datos"},
+    {k:"bien_indexcard", t:"Creación de la index card"}
   ]}
 ];
 
@@ -206,7 +224,8 @@ const EXTRA_INT_ITEMS = [
   {k:"fotos_sp", t:"Fotos y resumen — En SHAREPOINT"},
   {k:"kobo", t:"Verificar KOBO participantes"},
   {k:"kobo_ref", t:"Verificar KOBO de reflexión"},
-  {k:"base", t:"Actualizar interacción en base de datos"}
+  {k:"base", t:"Actualizar interacción en base de datos"},
+  {k:"indexcard", t:"Creación de la index card"}
 ];
 
 const PRE_ETAPAS = [
@@ -214,6 +233,15 @@ const PRE_ETAPAS = [
   {k:"reclu_plan", t:"Planificación de reclutamiento: Actores identificados y borradores de mensajes de invitación"},
   {k:"bienvenida_plan", t:"Planificación de bienvenida: Borradores de diseño de interacciones"},
   {k:"aprobacion", t:"Aprobación del consorcio para continuar con Etapa 2"}
+];
+
+// Drives the repeated per-stage sections in renderCase(): gate checkboxes (if any),
+// then "Interacciones de Etapa N", then that stage's independent actor list.
+const STAGES = [
+  {key:"e2", num:2, gateLabel:"Pasos generales", gate: PRE_ETAPAS},
+  {key:"e3", num:3, gateLabel:"Pasos generales - Etapa 3", gate: STAGE_GATE_E3},
+  {key:"e4", num:4, gateLabel:"Pasos generales - Etapa 4", gate: STAGE_GATE_E4},
+  {key:"e5", num:5, gateLabel:null, gate: []}
 ];
 
 let state = {cases: JSON.parse(JSON.stringify(CASES_DEF)), checks:{}, links:{}, responsables:{}, notes:{}};
@@ -237,19 +265,22 @@ async function loadState(){
       if(data.cases && typeof data.cases === "object"){
         const casesArr = Object.values(data.cases);
         if(casesArr.length >= 3){
+          const stageFields = ["stakeholders", "stakeholders_e3", "stakeholders_e4", "stakeholders_e5"];
           casesArr.forEach(c => {
-            if(c.stakeholders && !Array.isArray(c.stakeholders)){
-              c.stakeholders = Object.values(c.stakeholders).map(sh => {
-                if(sh.extraInts && !Array.isArray(sh.extraInts)){
-                  sh.extraInts = Object.values(sh.extraInts);
-                } else if(!sh.extraInts) {
-                  sh.extraInts = [];
-                }
-                return sh;
-              });
-            } else if(!c.stakeholders){
-              c.stakeholders = [];
-            }
+            stageFields.forEach(field => {
+              if(c[field] && !Array.isArray(c[field])){
+                c[field] = Object.values(c[field]).map(sh => {
+                  if(sh.extraInts && !Array.isArray(sh.extraInts)){
+                    sh.extraInts = Object.values(sh.extraInts);
+                  } else if(!sh.extraInts) {
+                    sh.extraInts = [];
+                  }
+                  return sh;
+                });
+              } else if(!c[field]){
+                c[field] = [];
+              }
+            });
           });
           state.cases = casesArr;
         }
@@ -369,14 +400,18 @@ function updateAllProgress(){
   state.cases.forEach(c=>{
     const bar = document.getElementById("prog-"+c.id);
     if(!bar) return;
-    let total = PRE_ETAPAS.length, done = 0;
-    PRE_ETAPAS.forEach(i=>{ if(state.checks[c.id+"_pre_"+i.k]) done++; });
-    c.stakeholders.forEach(sh=>{
-      INTERACTION_TYPES.forEach(itype=>{
-        itype.items.forEach(i=>{ total++; if(state.checks[sh.id+"_"+itype.id+"_"+i.k]) done++; });
-      });
-      (sh.extraInts||[]).forEach(ei=>{
-        EXTRA_INT_ITEMS.forEach(i=>{ total++; if(state.checks[sh.id+"_extra_"+ei.id+"_"+i.k]) done++; });
+    let total = 0, done = 0;
+    STAGES.forEach(stage=>{
+      total += stage.gate.length;
+      stage.gate.forEach(i=>{ if(state.checks[c.id+"_pre_"+i.k]) done++; });
+      const arr = c[stageField(stage.key)] || [];
+      arr.forEach(sh=>{
+        INTERACTION_TYPES.forEach(itype=>{
+          itype.items.forEach(i=>{ total++; if(state.checks[sh.id+"_"+itype.id+"_"+i.k]) done++; });
+        });
+        (sh.extraInts||[]).forEach(ei=>{
+          EXTRA_INT_ITEMS.forEach(i=>{ total++; if(state.checks[sh.id+"_extra_"+ei.id+"_"+i.k]) done++; });
+        });
       });
     });
     bar.style.width = (total ? Math.round(done/total*100) : 0)+"%";
@@ -394,22 +429,34 @@ function renderCheckRow(id, text){
   </div>`;
 }
 
+// Finds a stakeholder by id across ANY case and ANY of the 4 independent stage lists.
+// IDs are generated from Date.now() so they're unique regardless of which stage they
+// belong to — this lets add/delete/rename functions work without needing to know or
+// pass which stage a given stakeholder is in.
+function findStakeholder(shId){
+  for(const c of state.cases){
+    for(const field of ["stakeholders", "stakeholders_e3", "stakeholders_e4", "stakeholders_e5"]){
+      const arr = c[field] || [];
+      const sh = arr.find(x => x.id === shId);
+      if(sh) return {c, field, sh, arr};
+    }
+  }
+  return null;
+}
+
 // ---- EXTRA INTERACTIONS ----
 function saveExtraIntName(shId, eiId, val){
-  state.cases.forEach(c=>{
-    c.stakeholders.forEach(sh=>{
-      if(sh.id===shId){
-        const ei = (sh.extraInts||[]).find(x=>x.id===eiId);
-        if(ei) ei.name = val;
-      }
-    });
-  });
+  const found = findStakeholder(shId);
+  if(!found) return;
+  const ei = (found.sh.extraInts||[]).find(x=>x.id===eiId);
+  if(ei) ei.name = val;
   queueSave();
 }
 
-function addExtraInt(caseId, shId){
-  const c = state.cases.find(x=>x.id===caseId);
-  const sh = c.stakeholders.find(x=>x.id===shId);
+function addExtraInt(shId){
+  const found = findStakeholder(shId);
+  if(!found) return;
+  const sh = found.sh;
   if(!sh.extraInts) sh.extraInts = [];
   const num = 3 + sh.extraInts.length;
   sh.extraInts.push({id:"ei_"+Date.now(), name:"", num});
@@ -417,16 +464,16 @@ function addExtraInt(caseId, shId){
   queueSave();
 }
 
-function deleteExtraInt(caseId, shId, eiId){
-  const c = state.cases.find(x=>x.id===caseId);
-  const sh = c.stakeholders.find(x=>x.id===shId);
-  sh.extraInts = (sh.extraInts||[]).filter(x=>x.id!==eiId);
+function deleteExtraInt(shId, eiId){
+  const found = findStakeholder(shId);
+  if(!found) return;
+  found.sh.extraInts = (found.sh.extraInts||[]).filter(x=>x.id!==eiId);
   renderAll();
   queueSave();
 }
 
 // ---- STAKEHOLDERS ----
-function renderStakeholder(caseId, sh){
+function renderStakeholder(sh){
   let intHtml = "";
   INTERACTION_TYPES.forEach(itype=>{
     const dateKey = sh.id+"_date_"+itype.id;
@@ -439,7 +486,7 @@ function renderStakeholder(caseId, sh){
       const isRelevant = relevVal === "si";
       const isNo = relevVal === "no";
       intHtml += `<div class="int-type" style="display:flex;align-items:center;gap:8px">
-        <span style="flex:1">1: Reclutamiento</span>
+        <span style="flex:1">1: Invitación</span>
         <input type="text" value="${dateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${dateKey}',this.value)">
       </div>`;
       intHtml += `<div style="display:flex;align-items:center;gap:12px;padding:6px 0 4px">
@@ -476,18 +523,18 @@ function renderStakeholder(caseId, sh){
       <span>${num}:</span>
       <input type="text" value="${(ei.name||"").replace(/"/g,"&quot;")}" placeholder="Escribir objetivo de la interacción" style="font-size:11px;font-weight:600;flex:1;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif" oninput="saveExtraIntName('${sh.id}','${ei.id}',this.value)">
       <input type="text" value="${eiDateVal}" placeholder="dd/mm/aa" style="font-size:11px;border:none;border-bottom:1px solid #ddd;background:transparent;outline:none;color:#555;font-family:Arial,sans-serif;width:80px" oninput="saveCheckVal('${eiDateKey}',this.value)">
-      <button class="sh-delete" onclick="deleteExtraInt('${caseId}','${sh.id}','${ei.id}')" title="Eliminar interacción">✕</button>
+      <button class="sh-delete" onclick="deleteExtraInt('${sh.id}','${ei.id}')" title="Eliminar interacción">✕</button>
     </div>`;
     EXTRA_INT_ITEMS.forEach(i=>{ intHtml += renderCheckRow(sh.id+"_extra_"+ei.id+"_"+i.k, i.t); });
   });
-  intHtml += `<button class="add-int-btn" onclick="addExtraInt('${caseId}','${sh.id}')">+ Agregar interacción</button>`;
+  intHtml += `<button class="add-int-btn" onclick="addExtraInt('${sh.id}')">+ Agregar interacción</button>`;
 
   const badge = sh.combined ? `<span class="sh-badge">combinada</span>` : "";
   return `<div class="sh-block" id="shblock-${sh.id}">
     <div class="sh-head" onclick="toggleSh('${sh.id}')">
       <span class="sh-name">${sh.name}</span>${badge}
       <span class="sh-tog" id="sht-${sh.id}">▾</span>
-      <button class="sh-delete" onclick="deleteSh(event,'${caseId}','${sh.id}')" title="Eliminar actor">✕</button>
+      <button class="sh-delete" onclick="deleteSh(event,'${sh.id}')" title="Eliminar actor">✕</button>
     </div>
     <div class="sh-body collapsed" id="shbody-${sh.id}">${intHtml}</div>
   </div>`;
@@ -500,11 +547,12 @@ function toggleSh(id){
   tog.style.transform = c ? "" : "rotate(180deg)";
 }
 
-function deleteSh(event, caseId, shId){
+function deleteSh(event, shId){
   event.stopPropagation();
   if(!confirm("¿Eliminar este actor y todos sus datos?")) return;
-  const c = state.cases.find(x=>x.id===caseId);
-  c.stakeholders = c.stakeholders.filter(x=>x.id!==shId);
+  const found = findStakeholder(shId);
+  if(!found) return;
+  found.c[found.field] = found.arr.filter(x=>x.id!==shId);
   renderAll();
   queueSave();
 }
@@ -533,30 +581,31 @@ function renderLinkRow(caseId, linkKey, label){
 }
 
 // ---- ADD STAKEHOLDER FORM ----
-function renderAddShForm(caseId){
-  if(addingShFor !== caseId)
-    return `<button class="add-sh-btn" onclick="startAddSh('${caseId}')">+ Agregar actor</button>`;
+function renderAddShForm(caseId, stageKey){
+  const comboKey = caseId + "__" + stageKey;
+  if(addingShFor !== comboKey)
+    return `<button class="add-sh-btn" onclick="startAddSh('${caseId}','${stageKey}')">+ Agregar actor</button>`;
   const c = state.cases.find(x=>x.id===caseId);
-  const names = c.stakeholders.map(s=>s.name);
+  const names = (c[stageField(stageKey)] || []).map(s=>s.name);
   return `<div class="add-sh-form">
     <div style="font-size:12px;font-weight:600;color:#333;margin-bottom:8px">Nuevo actor</div>
     <div class="form-row">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin-bottom:8px">
-        <input type="checkbox" id="sh-comb-${caseId}"> ¿Interacción combinada?
+        <input type="checkbox" id="sh-comb-${comboKey}"> ¿Interacción combinada?
       </label>
     </div>
     <div class="form-row">
       <label>Seleccionar actor(es) existentes</label>
       <div class="combined-checks">
-        ${names.length ? names.map(n=>`<label><input type="checkbox" class="cpart-${caseId}" value="${n}"> ${n}</label>`).join("") : '<span style="font-size:11px;color:#bbb">Aún no hay actores registrados</span>'}
+        ${names.length ? names.map(n=>`<label><input type="checkbox" class="cpart-${comboKey}" value="${n}"> ${n}</label>`).join("") : '<span style="font-size:11px;color:#bbb">Aún no hay actores registrados</span>'}
       </div>
     </div>
     <div class="form-row">
       <label>O escribir nombre nuevo</label>
-      <input type="text" id="sh-extra-${caseId}" placeholder="Nombre del actor"/>
+      <input type="text" id="sh-extra-${comboKey}" placeholder="Nombre del actor"/>
     </div>
     <div class="form-btns">
-      <button onclick="confirmAddSh('${caseId}')">Agregar</button>
+      <button onclick="confirmAddSh('${caseId}','${stageKey}')">Agregar</button>
       <button onclick="cancelAddSh()" style="background:#fff;color:#333">Cancelar</button>
     </div>
   </div>`;
@@ -574,20 +623,23 @@ function editEmail(event, caseId){
   }
 }
 
-function startAddSh(caseId){ addingShFor=caseId; renderAll(); }
+function startAddSh(caseId, stageKey){ addingShFor = caseId + "__" + stageKey; renderAll(); }
 function cancelAddSh(){ addingShFor=null; renderAll(); }
 
-function confirmAddSh(caseId){
-  const combined = document.getElementById("sh-comb-"+caseId)?.checked || false;
+function confirmAddSh(caseId, stageKey){
+  const comboKey = caseId + "__" + stageKey;
+  const combined = document.getElementById("sh-comb-"+comboKey)?.checked || false;
   let parts = [];
-  document.querySelectorAll(".cpart-"+caseId+":checked").forEach(el=>parts.push(el.value));
-  const extra = document.getElementById("sh-extra-"+caseId);
+  document.querySelectorAll(".cpart-"+comboKey+":checked").forEach(el=>parts.push(el.value));
+  const extra = document.getElementById("sh-extra-"+comboKey);
   const extraVal = extra ? extra.value.trim() : "";
   if(extraVal) parts.push(extraVal);
   if(!parts.length) return;
   const c = state.cases.find(x=>x.id===caseId);
+  const field = stageField(stageKey);
+  if(!c[field]) c[field] = [];
   const finalName = parts.join(" + ");
-  c.stakeholders.push({id:"sh_"+Date.now(), name:finalName, combined, parts, extraInts:[]});
+  c[field].push({id:"sh_"+Date.now(), name:finalName, combined, parts, extraInts:[]});
   addingShFor = null;
   renderAll();
   queueSave();
@@ -596,8 +648,20 @@ function confirmAddSh(caseId){
 // ---- RENDER ----
 function renderCase(c){
   const meta = state.responsables[c.id] || {};
-  const preRows = PRE_ETAPAS.map(i=>renderCheckRow(c.id+"_pre_"+i.k, i.t)).join("");
-  const shBlocks = c.stakeholders.map(sh=>renderStakeholder(c.id, sh)).join("");
+
+  const stageBlocks = STAGES.map(stage=>{
+    const gateHtml = stage.gate.length
+      ? `<div class="sec-label" style="margin-top:12px">${stage.gateLabel}</div>` +
+        stage.gate.map(i=>renderCheckRow(c.id+"_pre_"+i.k, i.t)).join("")
+      : "";
+    const arr = c[stageField(stage.key)] || [];
+    const shBlocks = arr.map(sh=>renderStakeholder(sh)).join("");
+    return gateHtml +
+      `<div class="sec-label" style="margin-top:12px">Interacciones de Etapa ${stage.num}</div>` +
+      shBlocks +
+      renderAddShForm(c.id, stage.key);
+  }).join("");
+
   return `<div class="col-card">
     <div class="col-head">
       <h3>${c.title}</h3>
@@ -625,11 +689,7 @@ function renderCase(c){
     </div>
     <div class="prog-bar"><div class="prog-fill" id="prog-${c.id}" style="width:0%"></div></div>
     <div class="checklist">
-      <div class="sec-label">Pasos generales</div>
-      ${preRows}
-      <div class="sec-label" style="margin-top:12px">Interacciones de Etapa 2</div>
-      ${shBlocks}
-      ${renderAddShForm(c.id)}
+      ${stageBlocks}
     </div>
   </div>`;
 }
@@ -659,12 +719,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 const ALLOWED_DOMAIN = "verdensskove.org";
-const ALLOWED_EXTRA_EMAILS = ["mfjimenezp.hf@gmail.com"];
 
 function isAllowedEmail(email){
   if(!email) return false;
   const e = email.toLowerCase();
-  return e.endsWith("@" + ALLOWED_DOMAIN) || ALLOWED_EXTRA_EMAILS.includes(e);
+  return e.endsWith("@" + ALLOWED_DOMAIN);
 }
 
 async function getIdTokenSafe(){
@@ -701,7 +760,7 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
   const email = user.email || "";
   if(!isAllowedEmail(email)){
-    document.getElementById("login-error").textContent = "Esta herramienta solo está disponible para cuentas @" + ALLOWED_DOMAIN + " o cuentas autorizadas. Sesión iniciada como: " + email;
+    document.getElementById("login-error").textContent = "Esta herramienta solo está disponible para cuentas @" + ALLOWED_DOMAIN + ". Sesión iniciada como: " + email;
     document.getElementById("login-error").style.display = "block";
     await firebase.auth().signOut();
     return;
