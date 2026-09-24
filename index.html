@@ -177,6 +177,10 @@ const STAGE_GATE_E4 = [
   {k:"planif_e4", t:"Planificación de etapa 4"},
   {k:"aprob_e4", t:"Aprobación del consorcio para continuar con Etapa 4"}
 ];
+const STAGE_GATE_E5 = [
+  {k:"planif_e5", t:"Planificación de etapa 5"},
+  {k:"aprob_e5", t:"Aprobación del consorcio para continuar con Etapa 5"}
+];
 
 const INTERACTION_TYPES = [
   {id:"reclu", name:"1: Invitación", items:[
@@ -243,7 +247,7 @@ const STAGES = [
   {key:"e2", num:2, gateLabel:"Pasos iniciales", gate: PRE_ETAPAS},
   {key:"e3", num:3, gateLabel:null, gate: STAGE_GATE_E3},
   {key:"e4", num:4, gateLabel:null, gate: STAGE_GATE_E4},
-  {key:"e5", num:5, gateLabel:null, gate: []}
+  {key:"e5", num:5, gateLabel:null, gate: STAGE_GATE_E5}
 ];
 
 let state = {cases: JSON.parse(JSON.stringify(CASES_DEF)), checks:{}, links:{}, responsables:{}, notes:{}};
