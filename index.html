@@ -13,14 +13,14 @@ h1{font-size:22px;font-weight:600;text-align:center;margin-bottom:4px}
 .diagram-section iframe{width:100%;height:600px;border:none;border-radius:4px;display:block}
 .notes-section{background:#fff;border:1px solid #ddd;border-radius:8px;padding:16px;margin-bottom:20px}
 .notes-section h2{font-size:15px;font-weight:600;margin-bottom:10px;color:#333}
-.notes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.notes-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 .note-box{background:#fafafa;border:1px solid #ddd;border-radius:6px;overflow:hidden}
 .note-box-head{background:#f0f0f0;padding:7px 10px;font-size:12px;font-weight:600;color:#444}
 .note-box-fixed{font-size:12px;color:#444;padding:8px 10px;border-bottom:1px solid #eee;line-height:1.6}
 .note-box-fixed a{color:#378ADD;text-decoration:none}
 .note-box textarea{width:100%;border:none;background:transparent;padding:8px 10px;font-size:12px;color:#333;resize:vertical;min-height:70px;outline:none;font-family:Arial,sans-serif}
 .cases-section h2{font-size:15px;font-weight:600;margin-bottom:12px;color:#333}
-.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:20px}
 .col-card{background:#fff;border:1px solid #ddd;border-radius:8px;overflow:hidden}
 .col-head{padding:12px 14px;border-bottom:1px solid #eee;background:#f5f5f5}
 .col-head h3{font-size:14px;font-weight:600;color:#222}
@@ -132,10 +132,6 @@ input[type=radio]{accent-color:#1D9E75}
       <div class="note-box-head">Bolivia</div>
       <textarea id="note-bolivia" placeholder="Notas para Bolivia..." oninput="queueSave()"></textarea>
     </div>
-    <div class="note-box">
-      <div class="note-box-head">Colombia</div>
-      <textarea id="note-colombia" placeholder="Notas para Colombia..." oninput="queueSave()"></textarea>
-    </div>
   </div>
 </div>
 
@@ -157,8 +153,7 @@ const CASES_DEF = [
     {id:"sh_juntas", name:"Juntas de Agua", combined:false, extraInts:[]},
     {id:"sh_icf", name:"ICF", combined:false, extraInts:[]}
   ], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]},
-  {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]},
-  {id:"colombia", title:"Colombia", partner:"Human Forest", stakeholders:[], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]}
+  {id:"bolivia", title:"Bolivia", partner:"Bosques del Mundo", stakeholders:[], stakeholders_e3:[], stakeholders_e4:[], stakeholders_e5:[]}
 ];
 
 // Maps a stage key to the field on each case object holding that stage's independent
@@ -258,6 +253,7 @@ let saveTimer = null;
 const FB = "https://more4nature-bf513-default-rtdb.firebaseio.com";
 
 async function loadState(){
+  let purgedRemoved = false;
   try {
     const idToken = await getIdTokenSafe();
     const res = await fetch(FB + "/state.json?auth=" + idToken);
@@ -269,8 +265,12 @@ async function loadState(){
       if(data.notes && typeof data.notes === "object") state.notes = data.notes;
       // Firebase converts arrays to objects — convert back
       if(data.cases && typeof data.cases === "object"){
-        const casesArr = Object.values(data.cases);
-        if(casesArr.length >= 3){
+        const allCases = Object.values(data.cases);
+        const validIds = CASES_DEF.map(c => c.id);
+        const casesArr = allCases.filter(c => c && validIds.includes(c.id));
+        const removedCases = allCases.filter(c => c && REMOVED_CASE_IDS.includes(c.id));
+        if(casesArr.length >= validIds.length){
+          purgedRemoved = purgeRemovedCases(removedCases);
           const stageFields = ["stakeholders", "stakeholders_e3", "stakeholders_e4", "stakeholders_e5"];
           casesArr.forEach(c => {
             stageFields.forEach(field => {
@@ -296,7 +296,36 @@ async function loadState(){
     console.warn("Could not load shared state, using defaults", e);
   }
   await migrateLegacyCompromiso();
+  if(purgedRemoved) await persistNow();
   document.getElementById("loading").style.display = "none";
+}
+
+// Cases that were removed from the tool. Their data is permanently deleted from the
+// database the first time the page loads after this change (then it's a no-op).
+const REMOVED_CASE_IDS = ["colombia"];
+
+function purgeRemovedCases(removedCases){
+  let changed = false;
+  const prefixes = REMOVED_CASE_IDS.map(id => id + "_");
+  removedCases.forEach(c=>{
+    ["stakeholders","stakeholders_e3","stakeholders_e4","stakeholders_e5"].forEach(field=>{
+      let arr = c[field];
+      if(!arr) return;
+      if(!Array.isArray(arr)) arr = Object.values(arr);
+      arr.forEach(sh=>{ if(sh && sh.id) prefixes.push(sh.id + "_"); });
+    });
+    changed = true;
+  });
+  [state.checks, state.links].forEach(obj=>{
+    Object.keys(obj).forEach(k=>{
+      if(prefixes.some(p => k.startsWith(p))){ delete obj[k]; changed = true; }
+    });
+  });
+  REMOVED_CASE_IDS.forEach(id=>{
+    if(state.responsables[id]){ delete state.responsables[id]; changed = true; }
+    if(state.notes[id] !== undefined){ delete state.notes[id]; changed = true; }
+  });
+  return changed;
 }
 
 // One-time migration: any stakeholder with existing data under the old hardcoded
@@ -339,7 +368,7 @@ async function migrateLegacyCompromiso(){
 async function persistNow(){
   try {
     // Collect current note values into state before saving
-    ["general","honduras","bolivia","colombia"].forEach(k=>{
+    ["general","honduras","bolivia"].forEach(k=>{
       const el = document.getElementById("note-"+k);
       if(el) state.notes[k] = el.value;
     });
@@ -367,7 +396,7 @@ function showSaving(msg){
 }
 
 function loadNotes(){
-  ["general","honduras","bolivia","colombia"].forEach(k=>{
+  ["general","honduras","bolivia"].forEach(k=>{
     const el = document.getElementById("note-"+k);
     if(el && state.notes[k]) el.value = state.notes[k];
   });
@@ -388,11 +417,13 @@ function saveCheckVal(id, val){
 const ADMIN_EMAILS = ["cio@verdensskove.org", "jnh@verdensskove.org", "kpc@verdensskove.org"];
 let currentUserEmail = "";
 
-function isSharePointKey(id){ return id.endsWith("_sp"); }
+// Items only admins can tick: all SHAREPOINT items and both "Verificar KOBO" items
+// (keys end in _sp, _kobo or _kobo_ref).
+function isRestrictedKey(id){ return /(_sp|_kobo|_kobo_ref)$/.test(id); }
 function isAdminUser(){ return ADMIN_EMAILS.includes(currentUserEmail.toLowerCase()); }
 
 function toggleCheck(id){
-  if(isSharePointKey(id) && !isAdminUser()) return; // blocked: SharePoint items are admin-only
+  if(isRestrictedKey(id) && !isAdminUser()) return; // blocked: SharePoint and KOBO items are admin-only
   state.checks[id] = !state.checks[id];
   const row = document.getElementById("row-"+id);
   const cb = document.getElementById("cb-"+id);
@@ -426,7 +457,7 @@ function updateAllProgress(){
 
 function renderCheckRow(id, text){
   const checked = !!state.checks[id];
-  const restricted = isSharePointKey(id) && !isAdminUser();
+  const restricted = isRestrictedKey(id) && !isAdminUser();
   const lockNote = restricted ? ` title="Solo pueden marcar esto: ${ADMIN_EMAILS.join(", ")}"` : "";
   const lockIcon = restricted ? ` 🔒` : "";
   return `<div class="check-row${checked?" done":""}" id="row-${id}"${lockNote}>
